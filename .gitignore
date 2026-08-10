@@ -1,0 +1,52 @@
+# --- credentials ---
+.env
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+.pytest_cache/
+
+# --- IDE ---
+.idea/
+.vscode/
+
+# --- model checkpoints ---
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+checkpoints/
+best_*.pt
+
+# --- training outputs (src/train.py, run from the repo root) ---
+wandb/
+plots/
+plots_*/
+loss_history*.csv
+spike_report*.txt
+train_table.csv
+*_run.log
+*.jsonl
+
+# --- dataset caches ---
+adi17_subset/
+
+# --- submission outputs (src/submit.py) ---
+submissions/
+logits.tsv
+predictions.tsv
+submission.zip
+
+# --- OS ---
+.DS_Store
+Thumbs.db
