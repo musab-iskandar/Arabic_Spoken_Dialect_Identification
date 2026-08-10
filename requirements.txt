@@ -1,0 +1,26 @@
+# Derived from cohere_train_v5.py::install_dependencies().
+#
+# torch / torchaudio are deliberately NOT pinned here. The trainer installs them itself
+# (_ensure_torch_pair) because the rule is "never silently replace a working torch": on a box
+# that already has a matched pair, pip must not move it, and a mismatched torchaudio produces
+# an ABI crash (`undefined symbol: torch_library_impl`) rather than a clean error. If you
+# install from this file instead, install the pair yourself, in ONE command, first:
+#
+#     pip install torch torchaudio          # add --index-url for a specific CUDA build
+#     pip install -r requirements.txt
+#
+# torchaudio is optional: only the default-off `codec` augmentation needs it, everything else
+# has a librosa/torch fallback.
+
+transformers>=4.57
+accelerate
+huggingface_hub
+
+datasets==3.5.0
+soundfile
+librosa
+pandas
+numpy
+tqdm
+wandb
+matplotlib
