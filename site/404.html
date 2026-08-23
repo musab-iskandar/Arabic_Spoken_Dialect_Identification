@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Not found — Arabic Spoken Dialect Identification</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#F3F3F0">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;600;700&family=Geist+Mono:wght@400&family=Noto+Kufi+Arabic:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F3F0; --ink:#14161A; --ink-2:#585D66; --ink-3:#8A9099;
+  --rule:rgba(20,22,26,.11); --say:#2438D8;
+  --display:'Instrument Sans',system-ui,sans-serif;
+  --mono:'Geist Mono',ui-monospace,monospace;
+  --arabic:'Noto Kufi Arabic',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--paper);color:var(--ink);
+  font-family:var(--display);display:flex;flex-direction:column;
+  padding:clamp(20px,4vw,56px)}
+a{color:inherit}
+.mark{display:flex;align-items:center;gap:10px}
+.glyph{display:grid;grid-template-columns:9px 9px;grid-gap:3px}
+.glyph i{width:9px;height:9px;background:var(--ink);display:block}
+.glyph i:last-child{background:var(--say)}
+.mark .t{font-weight:700;font-size:.92rem;letter-spacing:-.015em}
+.mark .t small{display:block;font-family:var(--mono);font-weight:400;font-size:.6rem;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:1px}
+main{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:60ch}
+.code{font-family:var(--mono);font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink-3);margin:0 0 1.25rem}
+h1{font-weight:700;font-size:clamp(2rem,5.5vw,3.4rem);line-height:1.02;
+  letter-spacing:-.035em;margin:0 0 1.25rem;max-width:16ch}
+p{color:var(--ink-2);line-height:1.6;margin:0 0 2rem;max-width:52ch}
+.back{display:inline-flex;align-items:center;gap:9px;background:var(--ink);color:var(--paper);
+  font-family:var(--mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;
+  padding:14px 20px;text-decoration:none;transition:background .2s;align-self:flex-start}
+.back:hover{background:var(--say)}
+footer{font-family:var(--mono);font-size:.69rem;color:var(--ink-3);
+  border-top:1px solid var(--rule);padding-top:1.5rem;margin-top:2rem;
+  display:flex;justify-content:space-between;gap:1.5rem;flex-wrap:wrap}
+.ar{font-family:var(--arabic)}
+</style>
+</head>
+<body>
+
+<div class="mark">
+  <span class="glyph"><i></i><i></i><i></i><i></i></span>
+  <span class="t">ASDI<small>NADI-2026 · Subtask 2</small></span>
+</div>
+
+<main>
+  <p class="code">Error 404</p>
+  <h1>This one isn't in the twenty.</h1>
+  <p>The model has twenty classes and this page is not one of them. The address either
+  moved or never existed.</p>
+  <a class="back" href="/">← Back to the demo</a>
+</main>
+
+<footer>
+  <span>Arabic Spoken Dialect Identification · KAUST Academy · 2026</span>
+  <span class="ar">عشرون لهجة</span>
+</footer>
+
+</body>
+</html>
