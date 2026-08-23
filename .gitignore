@@ -47,6 +47,9 @@ logits.tsv
 predictions.tsv
 submission.zip
 
+# --- site data bundle produced by src/export_site.py ---
+site-data.tar.gz
+
 # --- OS ---
 .DS_Store
 Thumbs.db

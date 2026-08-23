@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://musab-iskandar.github.io/Arabic_Spoken_Dialect_Identification/sitemap.xml

@@ -1,0 +1,2 @@
+run_id,run_name,eval/id_cavg,eval/madis_overall,eval/gap,eval/id_acc,eval/casa_acc,eval/casa_cavg8,_step,_runtime,eval/off_set,eval/casa_cavg20,_timestamp,eval/step
+1shzfiwy,llrd_stable_bf16_cohere-ar,0.18708212169266303,78.57683573050718,23.71947467327118,69.04850006103516,45.32902538776398,0.3240466427208037,1500,387.623182367,36.10458284371328,0.15496111834752868,1785135857.1273005,1500

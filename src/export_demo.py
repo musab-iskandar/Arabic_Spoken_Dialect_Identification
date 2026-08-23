@@ -484,14 +484,14 @@ def main():
         print("\nLoading Casablanca (held-out half only)")
         casa = load_casablanca_holdout(ARGS.seed, ARGS.casa_val_frac, ARGS.casa_select_frac)
         run_source(model, fe, casa, "casa",
-                   "Out-of-domain (Casablanca), held-out program", ARGS.n_casa,
+                   "Casablanca, held-out program", ARGS.n_casa,
                    rng, out_dir, manifest)
 
     if ARGS.n_adi > 0:
         print("\nLoading ADI20 validation")
         adi = S._load_val_sample(ARGS.pool_size)
         run_source(model, fe, adi, "adi",
-                   "In-domain (ADI-20 validation)", ARGS.n_adi,
+                   "ADI-20 validation", ARGS.n_adi,
                    rng, out_dir, manifest)
 
     if not manifest:

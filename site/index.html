@@ -4,25 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Arabic Spoken Dialect Identification — NADI-2026</title>
-<meta name="description" content="A 20-way Arabic spoken dialect identifier for NADI-2026 Subtask 2. Press play and watch the model decide: 93.3% out of domain, above its own in-domain validation.">
+<meta name="description" content="A 20-way Arabic spoken dialect identifier for NADI-2026 Subtask 2. Press play and watch the model decide: 93.3% on Casablanca programs held out of training, 90.9% on ADI-20 validation.">
 <meta name="author" content="KAUST Academy">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#F3F3F0">
-<link rel="canonical" href="__BASE__/">
+<link rel="canonical" href="https://musab-iskandar.github.io/Arabic_Spoken_Dialect_Identification/">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Arabic Spoken Dialect Identification">
 <meta property="og:title" content="Listen to a model make up its mind">
-<meta property="og:description" content="Twenty Arabic dialects, one speech encoder. 93.3% out of domain — above its own in-domain validation.">
-<meta property="og:url" content="__BASE__/">
-<meta property="og:image" content="__BASE__/og.png">
+<meta property="og:description" content="Twenty Arabic dialects, one speech encoder. 93.3% on Casablanca programs held out of training.">
+<meta property="og:url" content="https://musab-iskandar.github.io/Arabic_Spoken_Dialect_Identification/">
+<meta property="og:image" content="https://musab-iskandar.github.io/Arabic_Spoken_Dialect_Identification/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="A speech waveform drawn in ink on paper, above the title 'Listen to a model make up its mind'.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Listen to a model make up its mind">
-<meta name="twitter:description" content="Twenty Arabic dialects, one speech encoder. 93.3% out of domain.">
-<meta name="twitter:image" content="__BASE__/og.png">
+<meta name="twitter:description" content="Twenty Arabic dialects, one speech encoder. 93.3% on held-out programs.">
+<meta name="twitter:image" content="https://musab-iskandar.github.io/Arabic_Spoken_Dialect_Identification/og.png">
 
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -194,6 +194,20 @@ code{font-family:var(--mono);font-size:.88em;background:var(--paper-2);padding:1
 .step h3{font-weight:600;font-size:1.24rem;letter-spacing:-.022em;margin:0 0 9px}
 .step p{margin:0;font-size:.9rem;line-height:1.62;color:var(--ink-2)}
 
+.figures{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+@media(max-width:720px){.figures{grid-template-columns:1fr}}
+.fig{background:var(--paper);padding:var(--s6) var(--s5) var(--s6)}
+.fv{font-weight:700;font-size:clamp(2.6rem,7vw,4rem);letter-spacing:-.045em;line-height:1;
+  font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:2px}
+.fv i{font-style:normal;font-size:.4em;color:var(--ink-3);font-weight:500}
+.fig:last-child .fv{color:var(--say-solid)}
+.fk{font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;color:var(--ink-2);
+  margin-top:var(--s4)}
+.fn{font-size:.85rem;line-height:1.55;color:var(--ink-3);margin-top:6px;max-width:34ch}
+.spec{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);margin:var(--s5) 0 0}
+
 table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.77rem}
 caption{text-align:left;font-family:var(--mono);font-size:.66rem;color:var(--ink-3);padding-bottom:var(--s4)}
 th{text-align:left;font-weight:500;color:var(--ink-3);font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;
@@ -243,7 +257,7 @@ addEventListener('error',()=>document.documentElement.className='');
   <div class="hero">
     <p class="kicker rv"><canvas id="kick"></canvas> Twenty Arabic dialects · one speech encoder</p>
     <h1 class="rv">Listen to a model make up its mind.</h1>
-    <p class="lede rv">Press play and watch the probability separate as the audio arrives — spread across the Maghreb at first, then collapsing onto one country. It lands correctly <b data-fig="broadcast">93.3%</b> of the time <b>out of domain</b>, which is <b data-fig="gap">2.4 points</b> above its own in-domain validation.</p>
+    <p class="lede rv">Press play and watch the probability separate as the audio arrives — spread across the Maghreb at first, then collapsing onto one country. It scores <b data-fig="ood">93.3%</b> on Casablanca programs held out of training, and <b data-fig="id">90.9%</b> on ADI-20 validation.</p>
     <div class="actions rv">
       <button class="btn" id="heroPlay">▶ Play a clip</button>
       <a class="btn g" href="#method">How it works</a>
@@ -255,7 +269,7 @@ addEventListener('error',()=>document.documentElement.className='');
     <div class="flag rv"><b>Simulated</b><span>The probabilities below are simulated, not model output — the page was built before the final inference pass. Every number is replaced with real output before submission, and this notice disappears with it.</span></div>
 
     <div class="dbar rv">
-      <div class="l">clip <b id="clipId">casa-03</b> · <b id="clipSrc">out-of-domain, held-out program</b> <span class="tagpill" id="clipBucket"></span></div>
+      <div class="l">clip <b id="clipId">casa-03</b> · <b id="clipSrc">Casablanca, held-out program</b> <span class="tagpill" id="clipBucket"></span></div>
       <div class="chips" id="chips"></div>
     </div>
     <p class="curation" id="curation"></p>
@@ -291,29 +305,37 @@ addEventListener('error',()=>document.documentElement.className='');
 
   <section id="method">
     <p class="eyebrow rv"><canvas class="emark"></canvas> Method</p>
-    <h2 class="rv">The hard part was never the accuracy.</h2>
-    <p class="sub rv">The model fits its training corpus comfortably and generalises far worse out of domain — which is exactly what the hidden test set is. Everything here exists to attack that gap.</p>
+    <h2 class="rv">How it was built.</h2>
+    <p class="sub rv">The hidden test set is broadcast speech, so broadcast speech is in the training mix — and the evaluation is arranged so that nothing the model was scored on could have leaked into what it learned from.</p>
     <div class="steps">
       <div class="step rv"><canvas class="stepc" data-mode="0"></canvas><span class="n">01</span><h3>Fine-tune</h3><p>An Arabic speech encoder is fine-tuned for 20-way dialect. The cues that identify a dialect sit in the middle layers, not just the last one, so every layer is weighted.</p></div>
-      <div class="step rv"><canvas class="stepc" data-mode="1"></canvas><span class="n">02</span><h3>Split honestly</h3><p>The out-of-domain corpus is split by program, not by clip. One half picks the checkpoint. The other half never influences that choice, so its score is not measured on the clips that produced it.</p></div>
+      <div class="step rv"><canvas class="stepc" data-mode="1"></canvas><span class="n">02</span><h3>Split honestly</h3><p>Casablanca is split by program, not by clip — clips from one broadcast share speakers and channel, so a clip-level split would leak. 80% trains, one half of the rest picks the checkpoint, and the last half is never looked at until the end.</p></div>
       <div class="step rv"><canvas class="stepc" data-mode="2"></canvas><span class="n">03</span><h3>Keep it stable</h3><p>One optimizer, built once, with a learning-rate schedule that never restarts mid-run. That is most of what kept long runs from drifting.</p></div>
     </div>
   </section>
 
   <section id="result">
     <p class="eyebrow rv"><canvas class="emark"></canvas> Result</p>
-    <h2 class="rv">The gap closed, then inverted.</h2>
-    <p class="sub rv">The last row adds the out-of-domain corpus to training, split by program so that no clip from an evaluated program is ever trained on. That is what closes the gap. What is unusual is that it then <b>overshoots</b> — scoring higher on programs it has never heard than on the clean corpus it was tuned against.</p>
-    <div class="rv">
-      <table>
-        <caption>Accuracy (%) by checkpoint. Out-of-domain is the program-disjoint held-out split. † trained on the out-of-domain corpus, split by program.</caption>
-        <tr><th>checkpoint</th><th class="n">in-domain</th><th class="n">out-of-domain</th><th class="n">gap</th></tr>
-        <tr><td>whisper-small, no aug</td><td class="n">74.5</td><td class="n">36.4</td><td class="n g">+38.1</td></tr>
-        <tr><td>cohere-ar, tuned</td><td class="n">89.7</td><td class="n">65.1</td><td class="n g">+24.6</td></tr>
-        <tr><td>+ augmentation, no reverb</td><td class="n">90.5</td><td class="n">64.3</td><td class="n g">+26.2</td></tr>
-        <tr class="win"><td>casavf20_6k †</td><td class="n">90.9</td><td class="n">93.3</td><td class="n g">−2.4</td></tr>
-      </table>
+    <h2 class="rv">What the final model scores.</h2>
+    <p class="sub rv">Trained on ADI-20 and 80% of the Casablanca programs. The remaining 20%
+    was split in half by program: one half chose the checkpoint, the other was held back and
+    never influenced training or selection. That held-back half is what the second figure is
+    measured on — different programs, different speakers, different channels.</p>
+
+    <div class="figures rv">
+      <div class="fig">
+        <div class="fv"><span id="figId">90.9</span><i>%</i></div>
+        <div class="fk">ADI-20 validation</div>
+        <div class="fn">In-domain. The corpus the model was trained on.</div>
+      </div>
+      <div class="fig">
+        <div class="fv"><span id="figOod">93.3</span><i>%</i></div>
+        <div class="fk">Casablanca, held-out programs</div>
+        <div class="fn">Programs excluded from training and from checkpoint selection.</div>
+      </div>
     </div>
+
+    <p class="spec rv" id="spec">20 classes · 878 test clips · accuracy, 20-way</p>
   </section>
 
 </main>
@@ -521,11 +543,11 @@ KSA:'السعودية',KUW:'الكويت',LEB:'لبنان',LIB:'ليبيا',MAU:
 PAL:'فلسطين',QAT:'قطر',SUD:'السودان',SYR:'سوريا',UAE:'الإمارات',YEM:'اليمن'};
 
 let DEMO=[
- {id:'casa-03',src:'out-of-domain, held-out program',dur:4.20,truth:'MOR',seed:2,
+ {id:'casa-03',src:'Casablanca, held-out program',dur:4.20,truth:'MOR',seed:2,
   probs:{MOR:.914,ALG:.041,TUN:.022,MAU:.011,LIB:.006,MSA:.003,EGY:.002,SUD:.001}},
- {id:'casa-07',src:'out-of-domain, held-out program',dur:3.60,truth:'EGY',seed:9,
+ {id:'casa-07',src:'Casablanca, held-out program',dur:3.60,truth:'EGY',seed:9,
   probs:{EGY:.883,SUD:.052,MSA:.031,PAL:.012,JOR:.009,LIB:.007,SYR:.004,IRA:.002}},
- {id:'casa-11',src:'out-of-domain, held-out program',dur:5.10,truth:'ALG',seed:17,
+ {id:'casa-11',src:'Casablanca, held-out program',dur:5.10,truth:'ALG',seed:17,
   probs:{MOR:.471,ALG:.362,TUN:.098,MAU:.031,LIB:.017,MSA:.011,EGY:.006,SUD:.004}},
  {id:'adi-02',src:'ADI-20 validation, in-domain',dur:4.80,truth:'KSA',seed:23,
   probs:{KSA:.792,KUW:.084,BAH:.048,QAT:.031,UAE:.021,OMA:.012,IRA:.008,YEM:.004}}
@@ -711,10 +733,10 @@ const AUDIO = document.getElementById('au');
    domain, not recording format. Applied here so existing exports read correctly too. */
 function reword(t){
   return String(t)
-    .replace(/^Broadcast audio \(Casablanca\), held-out program$/,
-             'Out-of-domain (Casablanca), held-out program')
-    .replace(/^ADI-20 validation \(in-domain\)$/, 'In-domain (ADI-20 validation)')
-    .replace(/broadcast/gi, 'out-of-domain');
+    .replace(/^(Broadcast audio|Out-of-domain) \(Casablanca\), held-out program$/,
+             'Casablanca, held-out program')
+    .replace(/^(ADI-20 validation \(in-domain\)|In-domain \(ADI-20 validation\))$/,
+             'ADI-20 validation');
 }
 
 const grab = async (u) => { try{ const r = await fetch(u,{cache:'no-store'});
@@ -752,33 +774,21 @@ async function hydrate(){
     [grab(base+'demo.json'), grab(base+'results.json')]);
   const demo = got[0], results = got[1];
 
-  /* ---- results table + headline figures ---- */
-  if(results && results.table && results.table.length){
-    const tb = document.querySelector('#result table');
-    /* the caption is rebuilt with the rows — writing innerHTML would drop it */
-    let html = '<caption></caption>'+
-               '<tr><th>checkpoint</th><th class="n">in-domain</th>'+
-               '<th class="n">out-of-domain</th><th class="n">gap</th></tr>';
-    let anySel = false, anyOod = false;
-    results.table.forEach(function(r){
-      if(!r.holdout) anySel = true;
-      if(r.trained_on_ood) anyOod = true;
-      html += '<tr class="'+(r.win?'win':'')+'"><td>'+r.label+
-              (r.trained_on_ood?' \u2020':'')+(r.holdout?'':' *')+'</td>'+
-              '<td class="n">'+r.in_domain.toFixed(1)+'</td>'+
-              '<td class="n">'+r.broadcast.toFixed(1)+'</td>'+
-              '<td class="n g">'+(r.gap>0?'+':'\u2212')+Math.abs(r.gap).toFixed(1)+'</td></tr>';
-    });
-    tb.innerHTML = html;
-    const cap = document.querySelector('#result caption');
-    if(cap) cap.textContent =
-      'Accuracy (%) by checkpoint. Out-of-domain is the program-disjoint held-out split.' +
-      (anyOod ? ' \u2020 trained on the out-of-domain corpus, split by program.' : '') +
-      (anySel ? ' * predates program-disjoint splitting; selection half shown.' : '');
+  /* ---- the two figures, and the hero numbers ---- */
+  if(results && results.headline){
     const h = results.headline;
-    if(h) document.querySelectorAll('[data-fig]').forEach(function(el){
-      if(el.dataset.fig==='broadcast') el.textContent = h.broadcast.toFixed(1)+'%';
-      if(el.dataset.fig==='gap') el.textContent = Math.abs(h.gap).toFixed(1)+' points';
+    const set = function(id, v){ const el = document.getElementById(id);
+      if(el) el.textContent = v.toFixed(1); };
+    set('figId', h.in_domain);
+    set('figOod', h.broadcast);
+    if(results.n_classes && results.n_test_clips){
+      const sp = document.getElementById('spec');
+      if(sp) sp.textContent = results.n_classes + ' classes \u00b7 ' +
+        results.n_test_clips + ' test clips \u00b7 accuracy, ' + results.n_classes + '-way';
+    }
+    document.querySelectorAll('[data-fig]').forEach(function(el){
+      if(el.dataset.fig === 'ood') el.textContent = h.broadcast.toFixed(1) + '%';
+      if(el.dataset.fig === 'id') el.textContent = h.in_domain.toFixed(1) + '%';
     });
   }
 

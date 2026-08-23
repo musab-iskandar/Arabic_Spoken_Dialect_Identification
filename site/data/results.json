@@ -1,0 +1,54 @@
+{
+ "source": "runs.csv",
+ "table": [
+  {
+   "label": "whisper-small, no aug",
+   "run": "noaug_baseline_whisper-small",
+   "trained_on_ood": false,
+   "in_domain": 74.5,
+   "broadcast": 36.4,
+   "gap": 38.1,
+   "holdout": false,
+   "win": false
+  },
+  {
+   "label": "cohere-ar, tuned",
+   "run": "v3_lm_llrd1_cohere-ar",
+   "trained_on_ood": false,
+   "in_domain": 89.7,
+   "broadcast": 65.1,
+   "gap": 24.6,
+   "holdout": true,
+   "win": false
+  },
+  {
+   "label": "+ augmentation, no reverb",
+   "run": "v3_lm_final_noreverb_codec_cohere-ar",
+   "trained_on_ood": false,
+   "in_domain": 90.5,
+   "broadcast": 64.3,
+   "gap": 26.2,
+   "holdout": true,
+   "win": false
+  },
+  {
+   "label": "casavf20_6k",
+   "run": "v3_lm_casatr_casavf20_6k_cohere-ar",
+   "trained_on_ood": true,
+   "in_domain": 90.9,
+   "broadcast": 93.3,
+   "gap": -2.4,
+   "holdout": true,
+   "win": true
+  }
+ ],
+ "headline": {
+  "broadcast": 93.3,
+  "in_domain": 90.9,
+  "gap": -2.4,
+  "run": "v3_lm_casatr_casavf20_6k_cohere-ar",
+  "holdout": true
+ },
+ "n_test_clips": 878,
+ "n_classes": 20
+}
