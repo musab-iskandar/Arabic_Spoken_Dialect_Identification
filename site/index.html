@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arabic Spoken Dialect Identification — NADI-2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ONE SIGNAL, TWO VIEWS.
+   The waveform is what a listener hears; the spectrogram is what the encoder
+   reads. Both are rendered from the same envelope function, so they can never
+   disagree. Everything else on the page — meters, ledger, section marks — is
+   built from the spectrogram's cell, so the whole page is one material.
+   ============================================================ */
+:root{
+  --paper:#F3F3F0;
+  --paper-2:#EDEDE9;
+  --ink:20,22,26;              /* rgb triplet — cells vary only in alpha */
+  --ink-solid:#14161A;
+  --ink-2:#585D66;
+  --ink-3:#8A9099;
+  --rule:rgba(20,22,26,.11);
+  --rule-2:rgba(20,22,26,.055);
+  --say:36,56,216;             /* ultramarine. the ONLY chroma. means: the model asserts */
+  --say-solid:#2438D8;
+  --no:#B3341F;
+  --cell:6px;
+
+  --display:'Instrument Sans',system-ui,sans-serif;
+  --mono:'Geist Mono',ui-monospace,monospace;
+  --arabic:'Noto Kufi Arabic',sans-serif;
+
+  --s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:36px;--s7:56px;--s8:84px;--s9:132px;
+  --gutter:clamp(20px,4vw,56px);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink-solid);
+  font-family:var(--display);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:0 var(--gutter)}
+a{color:inherit;text-decoration:none}
+canvas{display:block}
+
+/* ---------- ambient band: the page is always listening ---------- */
+.band{width:100%;height:26px;opacity:.5}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);height:58px}
+.mark{display:flex;align-items:center;gap:10px}
+.mark canvas{width:22px;height:22px}
+.mark .t{font-weight:700;font-size:.92rem;letter-spacing:-.015em}
+.mark .t small{display:block;font-family:var(--mono);font-weight:400;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:1px}
+.navl{display:flex;gap:var(--s5);font-family:var(--mono);font-size:.72rem;color:var(--ink-2)}
+.navl a{position:relative;padding-bottom:2px}
+.navl a::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;background:rgb(var(--say));transform:scaleX(0);transform-origin:left;transition:transform .22s cubic-bezier(.2,.7,.3,1)}
+.navl a:hover::after{transform:scaleX(1)}
+@media(max-width:760px){.navl{display:none}}
+
+/* ---------- reveal ----------
+   Hidden ONLY when scripting is confirmed alive (html.js, set by the guard in
+   <head>). A thrown script therefore degrades to a static page instead of a
+   blank one. */
+.js .rv{opacity:0;transform:translateY(14px);transition:opacity .6s cubic-bezier(.2,.7,.3,1),transform .6s cubic-bezier(.2,.7,.3,1)}
+.js .rv.in{opacity:1;transform:none}
+/* failsafe reveal: shown with no transition at all, for the case where the
+   transition itself never runs (background tab, stalled compositor). */
+.js .rv.now{transition:none!important;opacity:1!important;transform:none!important}
+
+/* ---------- hero ---------- */
+.hero{padding:var(--s8) 0 var(--s6);position:relative}
+h1{font-weight:700;font-size:clamp(2.5rem,6.6vw,4.6rem);line-height:.96;letter-spacing:-.042em;margin:0 0 var(--s5);max-width:15ch}
+.lede{font-size:1.1rem;line-height:1.56;color:var(--ink-2);max-width:54ch;margin:0 0 var(--s6)}
+.lede b{color:var(--ink-solid);font-weight:600}
+.kicker{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:0 0 var(--s5)}
+.kicker canvas{width:34px;height:12px}
+.actions{display:flex;gap:var(--s3);flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:9px;background:var(--ink-solid);color:var(--paper);border:0;
+  font-family:var(--mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;padding:14px 20px;cursor:pointer;
+  transition:background .2s}
+.btn:hover{background:var(--say-solid)}
+.btn.g{background:transparent;color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--rule)}
+.btn.g:hover{color:var(--say-solid);box-shadow:inset 0 0 0 1px rgba(36,56,216,.4)}
+
+/* the hero is the TIME domain — what a listener hears. ink on paper, no box. */
+.heroSpec{margin:var(--s7) 0 0;position:relative;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
+          mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.heroSpec canvas{width:100%;height:190px}
+
+/* ---------- the deciding instrument ---------- */
+.decide{margin:var(--s7) 0 0}
+.dbar{display:flex;justify-content:space-between;align-items:center;gap:var(--s4);flex-wrap:wrap;
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule-2);padding:var(--s3) 0;margin-bottom:var(--s5)}
+.dbar .l{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;color:var(--ink-3)}
+.dbar .l b{color:var(--ink-2);font-weight:500}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:.66rem;padding:5px 10px;border:0;cursor:pointer;color:var(--ink-3);
+  background:var(--paper-2);transition:background .18s,color .18s}
+.chip:hover{color:var(--ink-solid)}
+.chip[aria-pressed="true"]{background:var(--ink-solid);color:var(--paper)}
+.chip.wrongclip[aria-pressed="true"]{background:var(--no)}
+
+.stage{display:grid;grid-template-columns:1fr 316px;gap:var(--s6);align-items:start}
+@media(max-width:900px){.stage{grid-template-columns:1fr;gap:var(--s5)}}
+
+.scopeWrap{position:relative}
+.scopeWrap canvas{width:100%;height:172px}
+.transport{display:flex;align-items:center;gap:var(--s4);margin-top:var(--s4);border-top:1px solid var(--rule-2);padding-top:var(--s4)}
+.play{width:40px;height:40px;flex:0 0 40px;border:0;background:var(--say-solid);color:#fff;cursor:pointer;
+  display:grid;place-items:center;font-size:11px;transition:background .2s,transform .12s}
+.play:hover{background:var(--ink-solid)}
+.play:active{transform:scale(.94)}
+.tinfo{font-family:var(--mono);font-size:.68rem;color:var(--ink-3);display:flex;gap:var(--s5);flex-wrap:wrap}
+.tinfo b{color:var(--ink-2);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* the twenty — probability as a row of discrete cells, same primitive */
+.dist .cap{font-family:var(--mono);font-size:.63rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+  display:flex;justify-content:space-between;border-bottom:1px solid var(--rule);padding-bottom:9px;margin-bottom:11px}
+.rows{display:grid;gap:5px}
+.r{display:grid;grid-template-columns:4.7rem 1fr 2.4rem;align-items:center;gap:9px;font-family:var(--mono);font-size:.67rem}
+.r .nm{display:flex;gap:5px;align-items:baseline;justify-content:flex-end;white-space:nowrap;color:var(--ink-3)}
+.r .nm .ar{font-family:var(--arabic);font-size:.68rem;color:var(--ink-2);transition:color .2s}
+.r .nm .co{font-size:.58rem;letter-spacing:.05em}
+.meter{display:flex;gap:2px}
+.meter i{flex:1;height:9px;background:rgba(var(--ink),.075);transition:background .09s linear}
+.r .v{text-align:right;color:var(--ink-3);font-variant-numeric:tabular-nums;transition:color .2s}
+.r.lead .nm .ar,.r.lead .v{color:var(--ink-solid);font-weight:500}
+
+.verdict{margin-top:var(--s5);border-top:1px solid var(--rule);padding-top:var(--s4);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:var(--s3)}
+.verdict .ar{font-family:var(--arabic);font-size:1.9rem;line-height:1;letter-spacing:-.01em}
+.verdict .co{font-family:var(--mono);font-size:.7rem;letter-spacing:.18em;color:var(--ink-3);margin-left:9px}
+.verdict .meta{font-family:var(--mono);font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-3);text-align:right;line-height:1.8}
+.verdict .meta b{font-weight:500;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.ok{color:#1B7A4B!important}.bad{color:var(--no)!important}
+.note{font-family:var(--mono);font-size:.68rem;color:var(--ink-3);line-height:1.8;margin:var(--s5) 0 0;max-width:70ch}
+.note b{color:var(--ink-2);font-weight:400}
+
+.flag{display:flex;gap:11px;align-items:baseline;font-family:var(--mono);font-size:.68rem;line-height:1.7;
+  color:#7A5A12;background:#FBF3DF;padding:11px var(--s4);margin-bottom:var(--s5)}
+.flag b{letter-spacing:.1em;text-transform:uppercase;font-weight:600;white-space:nowrap}
+
+/* ---------- sections ---------- */
+section{padding:var(--s9) 0 0}
+.eyebrow{display:flex;align-items:center;gap:var(--s3);font-family:var(--mono);font-size:.67rem;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin:0 0 var(--s5)}
+.eyebrow canvas{width:26px;height:10px;flex:0 0 26px}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--rule)}
+h2{font-weight:700;font-size:clamp(1.75rem,3.6vw,2.6rem);letter-spacing:-.035em;line-height:1.04;margin:0 0 var(--s4);max-width:19ch}
+.sub{color:var(--ink-2);max-width:56ch;margin:0 0 var(--s6);font-size:1.02rem}
+code{font-family:var(--mono);font-size:.88em;background:var(--paper-2);padding:1px 5px}
+
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule)}
+@media(max-width:860px){.steps{grid-template-columns:1fr}}
+.step{background:var(--paper);padding:var(--s5) var(--s5) var(--s6)}
+.step canvas{width:100%;height:44px;margin-bottom:var(--s5)}
+.step .n{font-family:var(--mono);font-size:.64rem;letter-spacing:.14em;color:var(--ink-3);display:block;margin-bottom:9px}
+.step h3{font-weight:600;font-size:1.24rem;letter-spacing:-.022em;margin:0 0 9px}
+.step p{margin:0;font-size:.9rem;line-height:1.62;color:var(--ink-2)}
+
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.77rem}
+caption{text-align:left;font-family:var(--mono);font-size:.66rem;color:var(--ink-3);padding-bottom:var(--s4)}
+th{text-align:left;font-weight:500;color:var(--ink-3);font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;
+  padding:0 0 11px;border-bottom:1px solid var(--rule)}
+th.n,td.n{text-align:right}
+td{padding:13px 0;border-bottom:1px solid var(--rule-2);color:var(--ink-2);font-variant-numeric:tabular-nums}
+tr.win td{color:var(--ink-solid);font-weight:500}
+tr.win td.g{color:var(--say-solid)}
+td.g{color:var(--no)}
+
+.ledgerWrap canvas{width:100%;height:120px;margin-bottom:var(--s5)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:1px;background:var(--rule)}
+.stat{background:var(--paper);padding:var(--s5)}
+.stat .k{font-family:var(--mono);font-size:.63rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px}
+.stat .v{font-weight:700;font-size:2.1rem;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+/* the suffix only — never .num, which carries the figure itself */
+.stat .v span:not(.num){font-size:.82rem;color:var(--ink-3);font-family:var(--mono);font-weight:400;letter-spacing:0;margin-left:8px}
+
+footer{margin-top:var(--s9)}
+.fbar{border-top:1px solid var(--rule);padding:var(--s5) 0 var(--s7);font-family:var(--mono);font-size:.69rem;
+  color:var(--ink-3);display:flex;justify-content:space-between;gap:var(--s5);flex-wrap:wrap}
+.fbar a:hover{color:var(--say-solid)}
+
+/* Reduced motion: no movement, but the FINISHED state — never the empty one. */
+@media(prefers-reduced-motion:reduce){
+  .js .rv,.js .rv.in{opacity:1;transform:none;transition:none}
+}
+</style>
+</head>
+<body>
+<script>
+/* Reveal guard. Content is visible by default; scripting opts INTO hiding it,
+   and a failure anywhere below un-hides everything rather than blanking the page. */
+document.documentElement.className='js';
+addEventListener('error',()=>document.documentElement.className='');
+</script>
+
+<canvas class="band" id="bandTop"></canvas>
+
+<header>
+  <div class="wrap nav">
+    <a class="mark" href="#top">
+      <canvas id="glyph"></canvas>
+      <span class="t">ASDI<small>NADI-2026 · Subtask 2</small></span>
+    </a>
+    <nav class="navl">
+      <a href="#decide">Demo</a><a href="#method">Method</a><a href="#result">Result</a><a href="#ledger">Ledger</a>
+      <a href="https://github.com/musab-iskandar/Arabic_Spoken_Dialect_Identification">Code ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="top">
+
+  <div class="hero">
+    <p class="kicker rv"><canvas id="kick"></canvas> Twenty Arabic dialects · one speech encoder</p>
+    <h1 class="rv">Listen to a model make up its mind.</h1>
+    <p class="lede rv">Press play and watch the probability separate as the audio arrives — spread across the Maghreb at first, then collapsing onto one country. It lands correctly <b data-fig="broadcast">93.3%</b> of the time on broadcast audio it has never heard, which is <b data-fig="gap">2.4 points</b> above its own clean-corpus validation.</p>
+    <div class="actions rv">
+      <button class="btn" id="heroPlay">▶ Play a clip</button>
+      <a class="btn g" href="#method">How it works</a>
+    </div>
+    <div class="heroSpec rv"><canvas id="heroSpec"></canvas></div>
+  </div>
+
+  <div class="decide" id="decide">
+    <div class="flag rv"><b>Simulated</b><span>The probabilities below are simulated, not model output — the page was built before the final inference pass. Every number is replaced with real output before submission, and this notice disappears with it.</span></div>
+
+    <div class="dbar rv">
+      <div class="l">clip <b id="clipId">casa-03</b> · <b id="clipSrc">broadcast, held-out program</b></div>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <div class="stage">
+      <div class="rv">
+        <div class="scopeWrap"><canvas id="scope"></canvas></div>
+        <div class="transport">
+          <button class="play" id="play" aria-label="Play">▶</button>
+          <audio id="au" preload="none"></audio>
+          <div class="tinfo">
+            <span>t <b id="tNow">0.00</b> / <b id="tEnd">4.20</b> s</span>
+            <span>entropy <b id="ent">0.00</b></span>
+            <span>argmax <b id="am">—</b></span>
+          </div>
+        </div>
+        <p class="note" id="note">The sweep interpolates from an even spread across the dialect's neighbours toward the model's final posterior. <b>The end state is the model's real output; the path to it is illustrative.</b></p>
+      </div>
+
+      <div class="dist rv">
+        <div class="cap"><span>posterior</span><span>top 8 of 20</span></div>
+        <div class="rows" id="rows"></div>
+        <div class="verdict">
+          <div><span class="ar" id="vAr">—</span><span class="co" id="vCo"></span></div>
+          <div class="meta">
+            <div>p <b id="vP">0.000</b></div>
+            <div id="vTruth">truth — · <b>…</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="method">
+    <p class="eyebrow rv"><canvas class="emark"></canvas> Method</p>
+    <h2 class="rv">The hard part was never the accuracy.</h2>
+    <p class="sub rv">The model fits the ADI-20 corpus comfortably and generalises far worse to broadcast audio, which is what the hidden test set is made of. Everything here exists to attack that gap.</p>
+    <div class="steps">
+      <div class="step rv"><canvas class="stepc" data-mode="0"></canvas><span class="n">01</span><h3>Fine-tune</h3><p>A gated Arabic ASR encoder gets a classification head over mask-aware pooled states. Dialect cues sit disproportionately in the intermediate layers, so every layer is weighted rather than only the last.</p></div>
+      <div class="step rv"><canvas class="stepc" data-mode="1"></canvas><span class="n">02</span><h3>Split honestly</h3><p>The broadcast corpus is cut program-disjointly. One half selects the checkpoint. The other half never influences that choice, so its number is not measured on the clips that produced it.</p></div>
+      <div class="step rv"><canvas class="stepc" data-mode="2"></canvas><span class="n">03</span><h3>Keep it stable</h3><p>One optimizer, built up front, with per-group learning rates and layerwise decay. Only which parameters are trainable ever changes, so the schedule never resets underneath the model mid-run.</p></div>
+    </div>
+  </section>
+
+  <section id="result">
+    <p class="eyebrow rv"><canvas class="emark"></canvas> Result</p>
+    <h2 class="rv">The gap closed, then inverted.</h2>
+    <p class="sub rv">Out-of-domain accuracy above in-domain accuracy is not a normal outcome. It is the single number worth taking from this project.</p>
+    <div class="rv">
+      <table>
+        <caption>Accuracy (%) by checkpoint. Broadcast is the program-disjoint held-out half.</caption>
+        <tr><th>checkpoint</th><th class="n">in-domain</th><th class="n">broadcast</th><th class="n">gap</th></tr>
+        <tr><td>whisper-small, no aug</td><td class="n">74.5</td><td class="n">36.4</td><td class="n g">+38.1</td></tr>
+        <tr><td>cohere-ar, tuned</td><td class="n">89.7</td><td class="n">65.1</td><td class="n g">+24.6</td></tr>
+        <tr><td>+ augmentation, no reverb</td><td class="n">90.5</td><td class="n">64.3</td><td class="n g">+26.2</td></tr>
+        <tr class="win"><td>casavf20_6k</td><td class="n">90.9</td><td class="n">93.3</td><td class="n g">−2.4</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section id="ledger">
+    <p class="eyebrow rv"><canvas class="emark"></canvas> Ledger</p>
+    <h2 class="rv">Twenty-three runs. Eleven of them died.</h2>
+    <p class="sub rv">One column per run, in order, over four days in July 2026. Column height is wall-clock GPU time. Hollow columns crashed, were killed, or failed outright — and consumed the GPU anyway. Nothing has been filtered out.</p>
+    <div class="ledgerWrap rv"><canvas id="ledgerCanvas"></canvas></div>
+    <div class="stats rv">
+      <div class="stat"><div class="k">Runs</div><div class="v" data-count="23"><span class="num">23</span></div></div>
+      <div class="stat"><div class="k">Died</div><div class="v" data-count="11"><span class="num">11</span><span>48%</span></div></div>
+      <div class="stat"><div class="k">GPU hours</div><div class="v" data-count="25.2" data-dec="1"><span class="num">25.2</span></div></div>
+      <div class="stat"><div class="k">Burned</div><div class="v" data-count="5.2" data-dec="1"><span class="num">5.2</span><span>20%</span></div></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap fbar">
+    <span>Arabic Spoken Dialect Identification · KAUST Academy · 2026</span>
+    <a href="https://github.com/musab-iskandar/Arabic_Spoken_Dialect_Identification">github ↗</a>
+  </div>
+  <canvas class="band" id="bandBot"></canvas>
+</footer>
+
+<script>
+/* ===========================================================
+   THE CELL. One renderer. Every graphic on the page is this.
+   =========================================================== */
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const INK = [20,22,26], SAY = [36,56,216];
+const DPR = Math.min(devicePixelRatio||1, 2);
+
+function fit(c){
+  const r=c.getBoundingClientRect();
+  c.width=Math.max(1,Math.round(r.width*DPR));
+  c.height=Math.max(1,Math.round(r.height*DPR));
+  return c.getContext('2d');
+}
+/* stable pseudo-noise so a reload draws the same picture */
+function h3(x,y,s){const n=Math.sin(x*127.1+y*311.7+s*74.7)*43758.5453;return n-Math.floor(n)}
+
+/* the one drawing call: a grid of ink cells from a value field */
+function cells(ctx,W,H,px,field,{clear=true}={}){
+  if(clear) ctx.clearRect(0,0,W,H);
+  const cw=px*DPR, cols=Math.ceil(W/cw), rows=Math.max(1,Math.floor(H/cw));
+  const ch=H/rows;
+  for(let c=0;c<cols;c++){
+    for(let r=0;r<rows;r++){
+      const v=field(c,r,cols,rows);
+      if(!v||v.a<=0.012) continue;
+      const rgb=v.say?SAY:INK;
+      ctx.fillStyle=`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${Math.min(1,v.a)})`;
+      ctx.fillRect(c*cw, H-(r+1)*ch, cw-1*DPR, ch-1*DPR);
+    }
+  }
+}
+
+/* A speech-shaped energy field. Three things make this read as a voice rather
+   than as static: hard silences between syllables, banded formant energy, and
+   noise that exists ONLY where there is speech — uniform noise is what made an
+   earlier version look like grey snow. */
+/* ONE SIGNAL, TWO VIEWS.
+   envAt() is the signal itself. waveform() renders it in the time domain — what
+   a listener hears. speech() renders the same envelope in the frequency domain —
+   what the encoder reads. Both are driven by this one function, so the two
+   representations on the page can never disagree about what is being said. */
+function envAt(x,seed){
+  /* two incommensurate rates, so syllables never fall into a visible metre */
+  let env=Math.pow((Math.sin(x*4.0+seed)*0.5+0.5)*0.62
+                 + (Math.sin(x*2.53+seed*2.1)*0.5+0.5)*0.38, 1.5);
+  const phrase=Math.sin(x*1.4+seed*1.7)*0.5+0.5;             // phrase-level pauses
+  env*= phrase>0.22 ? 1 : 0.10;
+  return env<0.08 ? 0.035 : env;                             // breath, not silence
+}
+
+/* frequency domain — formant bands riding the envelope */
+function speech(c,r,rows,t,seed){
+  const x=c*0.13+t, f=r/rows, env=envAt(x,seed);
+  const f1=Math.exp(-Math.pow((f-0.05)/0.05,2));
+  const f2=Math.exp(-Math.pow((f-0.17)/0.07,2))*0.78;
+  const f3=Math.exp(-Math.pow((f-0.33)/0.11,2))*0.44;
+  let e=(f1+f2+f3)*env;
+  e+=Math.exp(-f*3.0)*env*0.32;                              // spectral tilt
+  e+=h3(c,r,seed)*0.06*env;                                  // noise rides the signal
+  return Math.max(0,Math.min(1,e*1.22));
+}
+
+/* time domain — a mirrored amplitude envelope in fine vertical strokes.
+   `from`/`to` are fractions of the width so a caller can draw part of it. */
+function waveform(ctx,W,H,t,seed,{alpha=1,amp=0.82,step=3,from=0,to=1,say=false,clear=true}={}){
+  if(clear) ctx.clearRect(from*W,0,(to-from)*W,H);
+  const mid=H/2, sw=step*DPR;
+  ctx.fillStyle = say ? `rgba(${SAY},${alpha})` : `rgba(${INK},${alpha})`;
+  for(let px=Math.floor(from*W); px<to*W; px+=sw){
+    const x=(px/(4.6*DPR))*0.13+t;
+    /* envelope sets the body; a fast term gives the ragged edge */
+    const a=envAt(x,seed)*(0.5+0.5*Math.abs(Math.sin(x*23.7+seed*3.1)))*amp;
+    const h=Math.max(1*DPR, a*mid);
+    ctx.fillRect(px, mid-h, Math.max(1*DPR,sw-1*DPR), h*2);
+  }
+}
+
+/* ---------- animation registry: one rAF, only visible canvases ---------- */
+const anims=[]; let T=0;
+function reg(canvas,draw,opts={}){
+  /* A bad selector must cost one graphic, never the whole page. */
+  if(!canvas || typeof canvas.getContext!=='function'){
+    console.warn('cells: expected a <canvas>, got', canvas); return null;
+  }
+  const o={canvas,draw,vis:true,ctx:null,W:0,H:0,...opts};
+  const size=()=>{o.ctx=fit(canvas);o.W=canvas.width;o.H=canvas.height;o.draw(o,T)};
+  size(); o.size=size;
+  new ResizeObserver(size).observe(canvas);
+  new IntersectionObserver(e=>{o.vis=e[0].isIntersecting},{rootMargin:'120px'}).observe(canvas);
+  anims.push(o); return o;
+}
+/* Under reduced motion every canvas is still DRAWN — once, at a fixed time that
+   gives a good settled frame. Motion is what gets removed, not the picture. */
+const STATIC_T = 2.5;
+let started = false;
+function loop(ts){
+  T = ts/1000; started = true;
+  for(const a of anims){
+    if(!a.vis) continue;
+    if(RM){ if(a.still) continue; a.still = true; a.draw(a, STATIC_T); continue; }
+    /* Ambient graphics carry no information at 60fps — capping them keeps the
+       frame budget for the one thing that is actually communicating. */
+    if(a.need && !a.need()) continue;
+    const cap = a.cap || 60;
+    if(T - (a.last||0) < 1/cap) continue;
+    a.last = T;
+    a.draw(a, T);
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- ambient bands: the page is always listening ---------- */
+[['bandTop',0.9],['bandBot',3.4]].forEach(([id,seed])=>{
+  const el=document.getElementById(id);
+  reg(el,(o,t)=>{
+    o.ctx.clearRect(0,0,o.W,o.H);
+    waveform(o.ctx,o.W,o.H,t*0.55,seed,{alpha:.34,amp:.85,step:3,clear:false});
+  },{cap:24});
+});
+
+/* ---------- the wordmark glyph: four cells, breathing ---------- */
+reg(document.getElementById('glyph'),(o,t)=>
+  cells(o.ctx,o.W,o.H,11,(c,r)=>{
+    const on=(c+r)%2===0;
+    const a=on?0.16+0.5*(0.5+0.5*Math.sin(t*1.5+c*1.1+r*0.7)):0.9;
+    return {a,say:!on&&c===1&&r===1};
+  }),{cap:20});
+
+/* small marks used beside labels */
+reg(document.getElementById('kick'),(o,t)=>{
+  o.ctx.clearRect(0,0,o.W,o.H);
+  waveform(o.ctx,o.W,o.H,t*0.7,5,{alpha:.75,amp:.9,step:2,clear:false});
+},{cap:20});
+document.querySelectorAll('.emark').forEach((el,i)=>
+  reg(el,(o,t)=>{
+    o.ctx.clearRect(0,0,o.W,o.H);
+    waveform(o.ctx,o.W,o.H,t*0.6,i*3+1,{alpha:.7,amp:.9,step:2,clear:false});
+  },{cap:20}));
+
+/* ---------- hero: the page's own spectrogram, ink on paper ---------- */
+reg(document.getElementById('heroSpec'),(o,t)=>{
+  o.ctx.clearRect(0,0,o.W,o.H);
+  waveform(o.ctx,o.W,o.H,t*0.30,11,{alpha:.30,amp:.95,step:5,clear:false});  // ghost
+  waveform(o.ctx,o.W,o.H,t*0.30,11,{alpha:.80,amp:.62,step:5,clear:false});  // body
+},{cap:30});
+
+/* ---------- method step marks ---------- */
+document.querySelectorAll('.stepc').forEach(el=>{
+  const mode=+el.dataset.mode;
+  reg(el,(o,t)=>{
+    const ctx=o.ctx,W=o.W,H=o.H;
+    ctx.clearRect(0,0,W,H);
+
+    if(mode===0){
+      /* 01 Fine-tune — the encoder's job, shown as the transform itself:
+         waveform going in on the left, spectrogram coming out on the right. */
+      const split=0.46+0.06*Math.sin(t*0.8);
+      waveform(ctx,W,H,t*0.7,4,{alpha:.55,amp:.9,step:3,from:0,to:split,clear:false});
+      cells(ctx,W,H,7,(c,r,cols,rows)=>{
+        if(c/cols<split) return {a:0};
+        return {a:speech(c,r,rows,t*0.7,4)*0.85};
+      },{clear:false});
+      ctx.fillStyle=`rgba(${SAY},.85)`;
+      ctx.fillRect(split*W-1*DPR,0,2*DPR,H);
+      return;
+    }
+
+    if(mode===1){
+      /* 02 Split honestly — one half live, the other withheld and inert */
+      cells(ctx,W,H,7,(c,r,cols,rows)=>{
+        const left=c<cols*0.5;
+        return {a:left?0.16+0.5*(0.5+0.5*Math.sin(t*1.3+c*0.5)):0.1, say:!left&&(c+r)%3===0};
+      },{clear:false});
+      return;
+    }
+
+    /* 03 Keep it stable — a schedule decaying without resetting */
+    cells(ctx,W,H,7,(c,r,cols,rows)=>{
+      const k=Math.abs(Math.sin(t*0.8+c*0.22));
+      return {a:r/rows<k*0.9?0.12+0.5*(1-r/rows):0.05};
+    },{clear:false});
+  },{cap:20});
+});
+
+/* ===========================================================
+   THE DEMO — same shape src/export_demo.py writes.
+   =========================================================== */
+const COUNTRIES=['MSA','BAH','TUN','ALG','EGY','IRA','JOR','KSA','KUW','LEB',
+                 'LIB','MAU','MOR','OMA','PAL','QAT','SUD','SYR','UAE','YEM'];
+const AR={MSA:'فصحى',BAH:'البحرين',TUN:'تونس',ALG:'الجزائر',EGY:'مصر',IRA:'العراق',JOR:'الأردن',
+KSA:'السعودية',KUW:'الكويت',LEB:'لبنان',LIB:'ليبيا',MAU:'موريتانيا',MOR:'المغرب',OMA:'عُمان',
+PAL:'فلسطين',QAT:'قطر',SUD:'السودان',SYR:'سوريا',UAE:'الإمارات',YEM:'اليمن'};
+
+let DEMO=[
+ {id:'casa-03',src:'broadcast, held-out program',dur:4.20,truth:'MOR',seed:2,
+  probs:{MOR:.914,ALG:.041,TUN:.022,MAU:.011,LIB:.006,MSA:.003,EGY:.002,SUD:.001}},
+ {id:'casa-07',src:'broadcast, held-out program',dur:3.60,truth:'EGY',seed:9,
+  probs:{EGY:.883,SUD:.052,MSA:.031,PAL:.012,JOR:.009,LIB:.007,SYR:.004,IRA:.002}},
+ {id:'casa-11',src:'broadcast, held-out program',dur:5.10,truth:'ALG',seed:17,
+  probs:{MOR:.471,ALG:.362,TUN:.098,MAU:.031,LIB:.017,MSA:.011,EGY:.006,SUD:.004}},
+ {id:'adi-02',src:'ADI-20 validation, in-domain',dur:4.80,truth:'KSA',seed:23,
+  probs:{KSA:.792,KUW:.084,BAH:.048,QAT:.031,UAE:.021,OMA:.012,IRA:.008,YEM:.004}}
+];
+const NEIGH={MOR:['ALG','TUN','MAU'],ALG:['MOR','TUN','LIB'],EGY:['SUD','MSA','PAL'],KSA:['KUW','BAH','QAT']};
+const MSTEPS=20;                       /* cells per meter */
+
+let clip=DEMO[0], playing=false, t0=0, prog=1, scopeDirty=true;
+
+function posterior(p){
+  const fin=clip.probs, keys=Object.keys(fin);
+  const fam=[clip.truth,...(NEIGH[clip.truth]||[])];
+  const ease=p*p*(3-2*p), out={};
+  keys.forEach(k=>{
+    const start=fam.includes(k)?1/fam.length:0.004;
+    let v=start+(fin[k]-start)*ease;
+    v+=(h3(keys.indexOf(k),Math.floor(p*30),3)-0.5)*0.10*(1-ease);
+    out[k]=Math.max(5e-4,v);
+  });
+  const s=Object.values(out).reduce((a,b)=>a+b,0);
+  keys.forEach(k=>out[k]/=s);
+  return out;
+}
+const entropy=o=>-Object.values(o).reduce((a,v)=>a+v*Math.log(Math.max(v,1e-12)),0);
+
+const rowsEl=document.getElementById('rows');
+function buildRows(){
+  rowsEl.innerHTML='';
+  Object.keys(clip.probs).forEach(k=>{
+    const d=document.createElement('div');d.className='r';d.dataset.k=k;
+    d.innerHTML=`<span class="nm"><span class="ar">${AR[k]}</span><span class="co">${k}</span></span>`+
+      `<span class="meter">${'<i></i>'.repeat(MSTEPS)}</span><span class="v">0.0</span>`;
+    rowsEl.appendChild(d);
+  });
+}
+function paint(o){
+  let best=null;for(const k in o) if(!best||o[k]>o[best]) best=k;
+  for(const el of rowsEl.children){
+    const k=el.dataset.k, v=o[k], lit=Math.round(v*MSTEPS), lead=k===best;
+    const m=el.querySelector('.meter').children;
+    for(let i=0;i<MSTEPS;i++){
+      const on=i<lit;
+      m[i].style.background = on
+        ? (lead?`rgba(${SAY},${0.45+0.55*(i/MSTEPS)})`:`rgba(${INK},${0.28+0.5*(i/MSTEPS)})`)
+        : `rgba(${INK},.075)`;
+    }
+    el.querySelector('.v').textContent=(v*100).toFixed(1);
+    el.classList.toggle('lead',lead);
+  }
+  document.getElementById('vAr').textContent=AR[best];
+  document.getElementById('vCo').textContent=best;
+  document.getElementById('vP').textContent=o[best].toFixed(3);
+  document.getElementById('ent').textContent=entropy(o).toFixed(2);
+  document.getElementById('am').textContent=best;
+  const right=best===clip.truth;
+  document.getElementById('vTruth').innerHTML=
+    `truth ${clip.truth} · <b class="${right?'ok':'bad'}">${right?'correct':'wrong'}</b>`;
+  return best;
+}
+
+/* the scope: the clip's own spectrogram, played through */
+/* The playhead IS the encoder. To its right the clip is still a waveform — what
+   a listener hears. To its left it has been transformed into a spectrogram —
+   what the model reads. Both are the same signal, drawn from envAt(). */
+reg(document.getElementById('scope'),(o,t)=>{
+  const head=prog, W=o.W, H=o.H, ctx=o.ctx;
+  ctx.clearRect(0,0,W,H);
+
+  /* analysed: frequency domain, up to the playhead */
+  cells(ctx,W,H,7,(c,r,cols,rows)=>{
+    const at=c/cols;
+    if(at>head) return {a:0};
+    const v=speech(c,r,rows,clip.seed*3,clip.seed);
+    const near=Math.max(0,1-(head-at)*9);
+    return {a:v*(0.62+0.38*near), say:near>0.72&&v>0.28};
+  },{clear:false});
+
+  /* unheard: time domain, from the playhead onward */
+  if(head<1){
+    waveform(ctx,W,H,clip.seed*3,clip.seed,
+      {alpha:.30,amp:.72,step:3,from:head,to:1,clear:false});
+  }
+  /* the transform boundary */
+  if(head>0&&head<1){
+    ctx.fillStyle=`rgba(${SAY},.9)`;
+    ctx.fillRect(head*W-1*DPR,0,2*DPR,H);
+  }
+},{need:()=>{ if(playing) return true; if(scopeDirty){scopeDirty=false; return true;} return false; }});
+
+function tick(ts){
+  if(!playing) return;
+  if(!t0) t0=ts;
+  let el=(ts-t0)/1000;
+  if(clip.audio && !AUDIO.paused && AUDIO.currentTime>0) el=AUDIO.currentTime;
+  prog=Math.min(el/clip.dur,1);
+  document.getElementById('tNow').textContent=Math.min(el,clip.dur).toFixed(2);
+  paint(posterior(prog));
+  if(prog<1) requestAnimationFrame(tick); else stop();
+}
+function start(){ if(playing)return; playing=true;t0=0;prog=0;
+  document.getElementById('play').textContent='■';
+  if(clip.audio){ try{ AUDIO.currentTime=0; AUDIO.play().catch(function(){}); }catch(e){} }
+  requestAnimationFrame(tick); }
+function stop(){ playing=false; prog=1; scopeDirty=true;
+  try{ AUDIO.pause(); }catch(e){}
+  document.getElementById('play').textContent='▶'; paint(posterior(1)); }
+
+function load(c){
+  clip=c; playing=false; prog=1; scopeDirty=true;
+  try{ AUDIO.pause(); AUDIO.src=c.audio||''; }catch(e){}
+  document.getElementById('clipId').textContent=c.id;
+  document.getElementById('clipSrc').textContent=c.src;
+  document.getElementById('tEnd').textContent=c.dur.toFixed(2);
+  document.getElementById('tNow').textContent='0.00';
+  buildRows(); paint(posterior(1));
+}
+
+const chips=document.getElementById('chips');
+DEMO.forEach((c,i)=>{
+  const b=document.createElement('button');
+  b.className='chip'+(c.truth!==Object.keys(c.probs)[0]?' wrongclip':'');
+  b.textContent=c.id; b.setAttribute('aria-pressed',i===0?'true':'false');
+  b.onclick=()=>{[...chips.children].forEach(x=>x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true'); load(c); start();};
+  chips.appendChild(b);
+});
+document.getElementById('play').onclick=()=>playing?stop():start();
+document.getElementById('heroPlay').onclick=()=>{
+  document.getElementById('decide').scrollIntoView({behavior:'smooth',block:'center'});
+  setTimeout(start,450);
+};
+
+/* ---------- ledger: 23 columns of cells, real states ---------- */
+/* state per run, in chronological order, from results/runs.csv */
+let RUNS=[
+ {h:0.23,dead:false},{h:0.78,dead:false},{h:0.34,dead:true},{h:0.76,dead:false},{h:0.37,dead:false},
+ {h:0.00,dead:true},{h:0.17,dead:true},{h:0.37,dead:true},{h:0.00,dead:true},{h:0.11,dead:true},
+ {h:0.20,dead:true},{h:1.05,dead:false},{h:0.60,dead:true},{h:2.99,dead:true},{h:2.80,dead:false},
+ {h:2.73,dead:false},{h:0.08,dead:false},{h:2.42,dead:false},{h:0.25,dead:true},{h:2.40,dead:false},
+ {h:2.29,dead:false,best:true},{h:0.11,dead:true},{h:4.16,dead:false}
+];
+let MAXH=Math.max(...RUNS.map(r=>r.h));
+/* Self-starting: growth begins the first time the loop draws this canvas, which
+   only happens once it is on screen. No observer to fail, and no path where the
+   columns sit at zero. */
+let ledgerT0 = null;
+reg(document.getElementById('ledgerCanvas'),(o,t)=>{
+  const ctx=o.ctx,W=o.W,H=o.H, n=RUNS.length, cw=W/n, px=7*DPR;
+  if(ledgerT0===null && started) ledgerT0 = t;
+  ctx.clearRect(0,0,W,H);
+  const rows=Math.floor(H/px);
+  RUNS.forEach((run,i)=>{
+    const grow = RM ? 1
+               : ledgerT0===null ? 0
+               : Math.min(1,Math.max(0,(t-ledgerT0)*1.1 - i*0.045));
+    const lit=Math.round((run.h/MAXH)*rows*grow);
+    for(let r=0;r<rows;r++){
+      const on=r<lit;
+      if(!on && !run.dead) continue;
+      let a = on ? (run.dead?0.13:0.20+0.55*(r/rows)) : 0.055;
+      if(run.best && on) a=0.35+0.6*(r/rows);
+      ctx.fillStyle = run.best&&on ? `rgba(${SAY},${a})` : `rgba(${INK},${a})`;
+      ctx.fillRect(i*cw, H-(r+1)*px, cw-2*DPR, px-2*DPR);
+    }
+  });
+});
+
+/* ---------- reveals + counters ---------- */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(!e.isIntersecting) return;
+  e.target.classList.add('in'); io.unobserve(e.target);
+  /* The final value is already in the markup, so it is correct with no JS at all.
+     The count-up only replays it. */
+  if(RM) return;
+  e.target.querySelectorAll('[data-count]').forEach(el=>{
+    const num=el.querySelector('.num'); if(!num) return;
+    const to=+el.dataset.count, dec=+(el.dataset.dec||0), t0=performance.now();
+    (function step(now){
+      const p=Math.min((now-t0)/900,1), e2=1-Math.pow(1-p,3);
+      num.textContent=(to*e2).toFixed(dec);
+      if(p<1) requestAnimationFrame(step);
+    })(t0);
+  });
+}),{threshold:.15,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.rv').forEach((el,i)=>{el.style.transitionDelay=(i%4)*60+'ms';io.observe(el)});
+
+/* Anything on screen that has not revealed itself gets shown outright. Runs on a
+   timer and again whenever the tab comes back to the foreground, because a
+   transition that never ran would otherwise leave real content invisible. */
+function failsafeReveal(){
+  document.querySelectorAll('.rv:not(.in)').forEach(el=>{
+    const r=el.getBoundingClientRect();
+    if(r.top < innerHeight && r.bottom > 0) el.classList.add('now','in');
+  });
+}
+setTimeout(failsafeReveal,2500);
+addEventListener('scroll',()=>{clearTimeout(window.__fs);window.__fs=setTimeout(failsafeReveal,2500)},{passive:true});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(failsafeReveal,900)});
+
+load(DEMO[0]);
+requestAnimationFrame(loop);
+
+/* ===========================================================
+   HYDRATION — replace the simulated fallbacks with real output.
+   Everything above works with no network at all; if site/data/ is
+   absent the page keeps its built-in numbers and keeps saying so.
+   Build site/data/ with:  python src/export_site.py --checkpoint <ckpt>
+   =========================================================== */
+let REAL = false;
+const AUDIO = document.getElementById('au');
+
+const grab = async (u) => { try{ const r = await fetch(u,{cache:'no-store'});
+  return r.ok ? await r.json() : null; }catch(e){ return null; } };
+
+/* demo.json writes probs as an array over the task's fixed class order */
+function topN(arr,n){
+  return arr.map((p,i)=>[COUNTRIES[i],p]).sort((a,b)=>b[1]-a[1]).slice(0,n)
+            .reduce((o,kv)=>(o[kv[0]]=kv[1],o),{});
+}
+
+/* Real amplitude, decoded from the clip itself, so the waveform on the page is
+   the waveform of that audio rather than a plausible stand-in. */
+async function envelopeOf(url,buckets){
+  buckets = buckets || 320;
+  try{
+    const Ctx = window.AudioContext || window.webkitAudioContext; if(!Ctx) return null;
+    const raw = await (await fetch(url)).arrayBuffer();
+    const buf = await (new Ctx()).decodeAudioData(raw);
+    const d = buf.getChannelData(0), per = Math.floor(d.length/buckets);
+    const out = new Float32Array(buckets); let peak = 1e-6;
+    for(let b=0;b<buckets;b++){
+      let m=0; const st=b*per, en=Math.min(d.length,st+per);
+      for(let i=st;i<en;i++){ const v=Math.abs(d[i]); if(v>m) m=v; }
+      out[b]=m; if(m>peak) peak=m;
+    }
+    for(let b=0;b<buckets;b++) out[b]/=peak;
+    return out;
+  }catch(e){ return null; }
+}
+
+async function hydrate(){
+  const base = 'data/';
+  const got = await Promise.all(
+    [grab(base+'demo.json'), grab(base+'ledger.json'), grab(base+'results.json')]);
+  const demo = got[0], ledger = got[1], results = got[2];
+
+  /* ---- results table + headline figures ---- */
+  if(results && results.table && results.table.length){
+    const tb = document.querySelector('#result table');
+    /* the caption is rebuilt with the rows — writing innerHTML would drop it */
+    let html = '<caption></caption>'+
+               '<tr><th>checkpoint</th><th class="n">in-domain</th>'+
+               '<th class="n">broadcast</th><th class="n">gap</th></tr>';
+    let anySel = false;
+    results.table.forEach(function(r){
+      if(!r.holdout) anySel = true;
+      html += '<tr class="'+(r.win?'win':'')+'"><td>'+r.label+(r.holdout?'':' *')+'</td>'+
+              '<td class="n">'+r.in_domain.toFixed(1)+'</td>'+
+              '<td class="n">'+r.broadcast.toFixed(1)+'</td>'+
+              '<td class="n g">'+(r.gap>0?'+':'\u2212')+Math.abs(r.gap).toFixed(1)+'</td></tr>';
+    });
+    tb.innerHTML = html;
+    const cap = document.querySelector('#result caption');
+    if(cap) cap.textContent =
+      'Accuracy (%) by checkpoint. Broadcast is the program-disjoint held-out half.' +
+      (anySel ? ' * predates program-disjoint splitting; selection half shown.' : '');
+    const h = results.headline;
+    if(h) document.querySelectorAll('[data-fig]').forEach(function(el){
+      if(el.dataset.fig==='broadcast') el.textContent = h.broadcast.toFixed(1)+'%';
+      if(el.dataset.fig==='gap') el.textContent = Math.abs(h.gap).toFixed(1)+' points';
+    });
+  }
+
+  /* ---- ledger ---- */
+  if(ledger && ledger.entries && ledger.entries.length){
+    let best=-1, bi=-1;
+    ledger.entries.forEach(function(e,i){
+      const v=e.casa_holdout; if(v!=null && v>best){ best=v; bi=i; }
+    });
+    RUNS = ledger.entries.map(function(e,i){
+      return {h:e.hours||0, dead:!!e.dead, best:i===bi};
+    });
+    MAXH = Math.max.apply(null, RUNS.map(function(r){return r.h;}).concat([0.01]));
+    ledgerT0 = null;                                 /* replay the growth with real bars */
+    const t = ledger.totals || {};
+    const st = document.querySelectorAll('.stat .num');
+    if(st.length===4 && t.runs){
+      st[0].textContent = t.runs;
+      st[1].textContent = t.runs_dead;
+      st[2].textContent = (t.hours_total||0).toFixed(1);
+      st[3].textContent = (t.hours_dead||0).toFixed(1);
+      const pd = document.querySelectorAll('.stat .v span:not(.num)');
+      if(pd[0]) pd[0].textContent = Math.round((t.share_dead_runs||0)*100)+'%';
+      if(pd[1]) pd[1].textContent = Math.round((t.share_dead_hours||0)*100)+'%';
+    }
+    const h2 = document.querySelector('#ledger h2');
+    if(h2 && t.runs) h2.textContent = t.runs+' runs. '+t.runs_dead+' of them died.';
+  }
+
+  /* ---- demo clips ---- */
+  if(demo && demo.clips && demo.clips.length){
+    const synthetic = demo.synthetic===true || demo.clips.some(function(c){return c.synthetic;});
+    DEMO = demo.clips.map(function(c,i){
+      return {
+        id: c.id, src: c.source_label || c.source || '',
+        dur: c.duration_s || 4, truth: c['true'], seed: (i*7+3),
+        audio: c.audio ? base+c.audio : null,
+        probs: Array.isArray(c.probs) ? topN(c.probs,8) : c.probs
+      };
+    });
+    REAL = !synthetic;
+    if(REAL){
+      const flag = document.querySelector('.flag'); if(flag) flag.remove();
+      const note = document.getElementById('note');
+      if(note) note.innerHTML =
+        'Every posterior here is this checkpoint\u2019s real output on a clip it was never ' +
+        'trained on. <b>The sweep toward it is illustrative</b> \u2014 the export records the ' +
+        'model\u2019s final distribution, not one per frame.';
+    }
+    chips.innerHTML = '';
+    DEMO.forEach(function(c,i){
+      const b = document.createElement('button');
+      b.className = 'chip'; b.textContent = c.id;
+      b.setAttribute('aria-pressed', i===0 ? 'true' : 'false');
+      b.onclick = function(){
+        [].forEach.call(chips.children, function(x){ x.setAttribute('aria-pressed','false'); });
+        b.setAttribute('aria-pressed','true'); load(c); start();
+      };
+      chips.appendChild(b);
+    });
+    load(DEMO[0]);
+    for(const c of DEMO){ if(c.audio) c.env = await envelopeOf(c.audio); }
+    scopeDirty = true;
+  }
+}
+hydrate();
+
+
+/* ---------- diagnostic panel: add ?debug to the URL ----------
+   Temporary. Reports what the page actually observes, so a motion problem is
+   read off the screen instead of guessed at. Delete before shipping. */
+if(location.search.includes('debug')){
+  const d=document.createElement('div');
+  d.style.cssText='position:fixed;left:10px;bottom:10px;z-index:999;background:#14161A;color:#F3F3F0;'+
+    'font:11px/1.7 ui-monospace,monospace;padding:10px 13px;white-space:pre;max-width:92vw';
+  document.body.appendChild(d);
+  let n=0,last=performance.now(),fps=0;
+  (function up(){
+    n++; const now=performance.now();
+    if(now-last>500){ fps=Math.round(n/((now-last)/1000)); n=0; last=now; }
+    const vis=anims.filter(a=>a.vis).length;
+    d.textContent=
+      `prefers-reduced-motion : ${RM}                 <- if true, motion is OFF by design\n`+
+      `rAF loop running       : ${started}\n`+
+      `frames per second      : ${fps}\n`+
+      `canvases registered    : ${anims.length}   on screen: ${vis}\n`+
+      `page clock T           : ${T.toFixed(2)}s\n`+
+      `ledger clock           : ${ledgerT0===null?'not started':ledgerT0.toFixed(2)+'s'}\n`+
+      `demo playing           : ${playing}   progress: ${prog.toFixed(2)}\n`+
+      `device pixel ratio     : ${DPR}`;
+    requestAnimationFrame(up);
+  })();
+}
+</script>
+</body>
+</html>
