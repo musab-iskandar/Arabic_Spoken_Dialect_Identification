@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo-wordmark.svg" alt="ASDI — Arabic Spoken Dialect Identification" width="560">
+</p>
+
 # Arabic Spoken Dialect Identification
 
 > **NADI-2026 Shared Task — Subtask 2**

@@ -1,0 +1,902 @@
+{
+ "generated_at": "2026-08-23T20:10:00+00:00",
+ "checkpoint": "best_v3_lm_casatr_shortcrop_s1337_cohere-ar.pt",
+ "pool": "mean",
+ "layer_mix": true,
+ "tta": 0,
+ "countries": [
+  "MSA",
+  "BAH",
+  "TUN",
+  "ALG",
+  "EGY",
+  "IRA",
+  "JOR",
+  "KSA",
+  "KUW",
+  "LEB",
+  "LIB",
+  "MAU",
+  "MOR",
+  "OMA",
+  "PAL",
+  "QAT",
+  "SUD",
+  "SYR",
+  "UAE",
+  "YEM"
+ ],
+ "casa_countries": [
+  "ALG",
+  "EGY",
+  "JOR",
+  "MAU",
+  "MOR",
+  "PAL",
+  "UAE",
+  "YEM"
+ ],
+ "split_params": {
+  "seed": 1337,
+  "casa_val_frac": 0.2,
+  "casa_select_frac": 0.5
+ },
+ "summary": {
+  "n": 12,
+  "n_correct": 6,
+  "accuracy": 0.5
+ },
+ "pairs": [
+  {
+   "country": "UAE",
+   "studio": "adi-00",
+   "broadcast": "casa-05"
+  }
+ ],
+ "clips": [
+  {
+   "id": "casa-00",
+   "audio": "audio/casa-00.wav",
+   "bytes": 38204,
+   "duration_s": 1.19,
+   "source": "casa",
+   "source_label": "Broadcast audio (Casablanca), held-out program",
+   "program": "48961",
+   "true": "PAL",
+   "pred": "SYR",
+   "correct": false,
+   "confidence": 0.2419,
+   "bucket": "close-call",
+   "probs": [
+    0.00464,
+    0.00423,
+    0.01202,
+    0.00475,
+    0.10652,
+    0.00234,
+    0.18549,
+    0.00256,
+    0.00148,
+    0.05929,
+    0.03526,
+    0.00322,
+    0.01389,
+    0.04546,
+    0.23085,
+    0.01846,
+    0.00109,
+    0.24193,
+    0.01998,
+    0.00655
+   ],
+   "top5": [
+    [
+     "SYR",
+     0.2419
+    ],
+    [
+     "PAL",
+     0.2308
+    ],
+    [
+     "JOR",
+     0.1855
+    ],
+    [
+     "EGY",
+     0.1065
+    ],
+    [
+     "LEB",
+     0.0593
+    ]
+   ],
+   "entropy": 2.095,
+   "candidates": [
+    "ALG",
+    "EGY",
+    "JOR",
+    "MAU",
+    "MOR",
+    "PAL",
+    "UAE",
+    "YEM"
+   ]
+  },
+  {
+   "id": "casa-01",
+   "audio": "audio/casa-01.wav",
+   "bytes": 86594,
+   "duration_s": 2.7,
+   "source": "casa",
+   "source_label": "Broadcast audio (Casablanca), held-out program",
+   "program": "12484",
+   "true": "ALG",
+   "pred": "MOR",
+   "correct": false,
+   "confidence": 0.8925,
+   "bucket": "confident-wrong",
+   "probs": [
+    0.01212,
+    0.00369,
+    0.01597,
+    0.02234,
+    0.00359,
+    0.0017,
+    0.00302,
+    0.00688,
+    0.00265,
+    0.00129,
+    0.01112,
+    0.00359,
+    0.89254,
+    0.00221,
+    0.00192,
+    0.00211,
+    0.00405,
+    0.00307,
+    0.00298,
+    0.00314
+   ],
+   "top5": [
+    [
+     "MOR",
+     0.8925
+    ],
+    [
+     "ALG",
+     0.0223
+    ],
+    [
+     "TUN",
+     0.016
+    ],
+    [
+     "MSA",
+     0.0121
+    ],
+    [
+     "LIB",
+     0.0111
+    ]
+   ],
+   "entropy": 0.618,
+   "candidates": [
+    "ALG",
+    "EGY",
+    "JOR",
+    "MAU",
+    "MOR",
+    "PAL",
+    "UAE",
+    "YEM"
+   ]
+  },
+  {
+   "id": "casa-02",
+   "audio": "audio/casa-02.wav",
+   "bytes": 119372,
+   "duration_s": 3.73,
+   "source": "casa",
+   "source_label": "Broadcast audio (Casablanca), held-out program",
+   "program": "69719",
+   "true": "MAU",
+   "pred": "MAU",
+   "correct": true,
+   "confidence": 0.9908,
+   "bucket": "confident-correct",
+   "probs": [
+    0.00036,
+    0.00014,
+    0.00019,
+    0.00079,
+    0.0003,
+    0.00018,
+    0.00079,
+    0.00042,
+    0.00029,
+    0.00126,
+    7e-05,
+    0.99076,
+    0.00038,
+    0.0015,
+    4e-05,
+    0.00028,
+    0.0005,
+    0.00034,
+    0.00085,
+    0.00055
+   ],
+   "top5": [
+    [
+     "MAU",
+     0.9908
+    ],
+    [
+     "OMA",
+     0.0015
+    ],
+    [
+     "LEB",
+     0.0013
+    ],
+    [
+     "UAE",
+     0.0008
+    ],
+    [
+     "JOR",
+     0.0008
+    ]
+   ],
+   "entropy": 0.077,
+   "candidates": [
+    "ALG",
+    "EGY",
+    "JOR",
+    "MAU",
+    "MOR",
+    "PAL",
+    "UAE",
+    "YEM"
+   ]
+  },
+  {
+   "id": "casa-03",
+   "audio": "audio/casa-03.wav",
+   "bytes": 202814,
+   "duration_s": 6.34,
+   "source": "casa",
+   "source_label": "Broadcast audio (Casablanca), held-out program",
+   "program": "47219",
+   "true": "PAL",
+   "pred": "SYR",
+   "correct": false,
+   "confidence": 0.2877,
+   "bucket": "close-call",
+   "probs": [
+    0.27457,
+    0.00767,
+    0.0043,
+    0.13277,
+    0.00671,
+    0.03081,
+    0.00062,
+    0.02867,
+    0.03691,
+    0.00626,
+    0.00869,
+    0.06522,
+    0.00651,
+    0.0034,
+    0.02245,
+    0.00626,
+    0.02371,
+    0.28775,
+    0.01755,
+    0.02917
+   ],
+   "top5": [
+    [
+     "SYR",
+     0.2877
+    ],
+    [
+     "MSA",
+     0.2746
+    ],
+    [
+     "ALG",
+     0.1328
+    ],
+    [
+     "MAU",
+     0.0652
+    ],
+    [
+     "KUW",
+     0.0369
+    ]
+   ],
+   "entropy": 2.094,
+   "candidates": [
+    "ALG",
+    "EGY",
+    "JOR",
+    "MAU",
+    "MOR",
+    "PAL",
+    "UAE",
+    "YEM"
+   ]
+  },
+  {
+   "id": "casa-04",
+   "audio": "audio/casa-04.wav",
+   "bytes": 26794,
+   "duration_s": 0.84,
+   "source": "casa",
+   "source_label": "Broadcast audio (Casablanca), held-out program",
+   "program": "13290",
+   "true": "ALG",
+   "pred": "MOR",
+   "correct": false,
+   "confidence": 0.8707,
+   "bucket": "confident-wrong",
+   "probs": [
+    0.00203,
+    0.01025,
+    0.00789,
+    0.02568,
+    0.00284,
+    0.01187,
+    0.00112,
+    0.01534,
+    0.00731,
+    0.00512,
+    0.01601,
+    0.0007,
+    0.87065,
+    0.001,
+    0.00334,
+    0.0029,
+    0.00228,
+    0.00441,
+    0.005,
+    0.00426
+   ],
+   "top5": [
+    [
+     "MOR",
+     0.8707
+    ],
+    [
+     "ALG",
+     0.0257
+    ],
+    [
+     "LIB",
+     0.016
+    ],
+    [
+     "KSA",
+     0.0153
+    ],
+    [
+     "IRA",
+     0.0119
+    ]
+   ],
+   "entropy": 0.718,
+   "candidates": [
+    "ALG",
+    "EGY",
+    "JOR",
+    "MAU",
+    "MOR",
+    "PAL",
+    "UAE",
+    "YEM"
+   ]
+  },
+  {
+   "id": "casa-05",
+   "audio": "audio/casa-05.wav",
+   "bytes": 64030,
+   "duration_s": 2.0,
+   "source": "casa",
+   "source_label": "Broadcast audio (Casablanca), held-out program",
+   "program": "33511",
+   "true": "UAE",
+   "pred": "OMA",
+   "correct": false,
+   "confidence": 0.4643,
+   "bucket": "close-call",
+   "probs": [
+    0.0116,
+    0.01633,
+    0.00435,
+    0.00134,
+    0.00217,
+    0.00372,
+    0.00078,
+    0.00257,
+    0.00121,
+    0.00156,
+    0.00397,
+    0.0002,
+    0.00202,
+    0.46432,
+    0.01447,
+    0.00897,
+    0.00194,
+    0.00307,
+    0.45003,
+    0.0054
+   ],
+   "top5": [
+    [
+     "OMA",
+     0.4643
+    ],
+    [
+     "UAE",
+     0.45
+    ],
+    [
+     "BAH",
+     0.0163
+    ],
+    [
+     "PAL",
+     0.0145
+    ],
+    [
+     "MSA",
+     0.0116
+    ]
+   ],
+   "entropy": 1.138,
+   "candidates": [
+    "ALG",
+    "EGY",
+    "JOR",
+    "MAU",
+    "MOR",
+    "PAL",
+    "UAE",
+    "YEM"
+   ]
+  },
+  {
+   "id": "casa-06",
+   "audio": "audio/casa-06.wav",
+   "bytes": 106138,
+   "duration_s": 3.32,
+   "source": "casa",
+   "source_label": "Broadcast audio (Casablanca), held-out program",
+   "program": "59974",
+   "true": "MAU",
+   "pred": "MAU",
+   "correct": true,
+   "confidence": 0.9923,
+   "bucket": "confident-correct",
+   "probs": [
+    0.00018,
+    0.00037,
+    0.00015,
+    0.00012,
+    0.00034,
+    0.00023,
+    0.00048,
+    0.00039,
+    0.00025,
+    0.00048,
+    0.00038,
+    0.99226,
+    0.00035,
+    0.00108,
+    0.00012,
+    0.00094,
+    0.00048,
+    0.00076,
+    0.00048,
+    0.00015
+   ],
+   "top5": [
+    [
+     "MAU",
+     0.9923
+    ],
+    [
+     "OMA",
+     0.0011
+    ],
+    [
+     "QAT",
+     0.0009
+    ],
+    [
+     "SYR",
+     0.0008
+    ],
+    [
+     "SUD",
+     0.0005
+    ]
+   ],
+   "entropy": 0.067,
+   "candidates": [
+    "ALG",
+    "EGY",
+    "JOR",
+    "MAU",
+    "MOR",
+    "PAL",
+    "UAE",
+    "YEM"
+   ]
+  },
+  {
+   "id": "casa-07",
+   "audio": "audio/casa-07.wav",
+   "bytes": 101142,
+   "duration_s": 3.16,
+   "source": "casa",
+   "source_label": "Broadcast audio (Casablanca), held-out program",
+   "program": "7884",
+   "true": "JOR",
+   "pred": "JOR",
+   "correct": true,
+   "confidence": 0.9915,
+   "bucket": "confident-correct",
+   "probs": [
+    0.0002,
+    0.00043,
+    0.00057,
+    0.00033,
+    0.00075,
+    0.00026,
+    0.99146,
+    0.0006,
+    0.00021,
+    0.00048,
+    2e-05,
+    0.00057,
+    0.0003,
+    0.00077,
+    0.00032,
+    0.00019,
+    0.00016,
+    0.00162,
+    0.00013,
+    0.00063
+   ],
+   "top5": [
+    [
+     "JOR",
+     0.9915
+    ],
+    [
+     "SYR",
+     0.0016
+    ],
+    [
+     "OMA",
+     0.0008
+    ],
+    [
+     "EGY",
+     0.0007
+    ],
+    [
+     "YEM",
+     0.0006
+    ]
+   ],
+   "entropy": 0.072,
+   "candidates": [
+    "ALG",
+    "EGY",
+    "JOR",
+    "MAU",
+    "MOR",
+    "PAL",
+    "UAE",
+    "YEM"
+   ]
+  },
+  {
+   "id": "adi-00",
+   "audio": "audio/adi-00.wav",
+   "bytes": 102444,
+   "duration_s": 3.2,
+   "source": "adi",
+   "source_label": "ADI-20 validation (in-domain)",
+   "program": null,
+   "true": "UAE",
+   "pred": "QAT",
+   "correct": false,
+   "confidence": 0.9327,
+   "bucket": "confident-wrong",
+   "probs": [
+    0.0031,
+    0.00112,
+    0.00179,
+    0.00074,
+    0.00152,
+    0.00633,
+    0.00038,
+    0.00122,
+    0.00577,
+    0.00284,
+    0.00223,
+    0.00148,
+    0.0024,
+    0.00101,
+    0.00289,
+    0.93267,
+    0.00079,
+    0.00609,
+    0.02505,
+    0.00058
+   ],
+   "top5": [
+    [
+     "QAT",
+     0.9327
+    ],
+    [
+     "UAE",
+     0.025
+    ],
+    [
+     "IRA",
+     0.0063
+    ],
+    [
+     "SYR",
+     0.0061
+    ],
+    [
+     "KUW",
+     0.0058
+    ]
+   ],
+   "entropy": 0.402,
+   "candidates": [
+    "IRA",
+    "JOR",
+    "KSA",
+    "KUW",
+    "LEB",
+    "LIB",
+    "MAU",
+    "MOR",
+    "OMA",
+    "PAL",
+    "SYR",
+    "UAE"
+   ]
+  },
+  {
+   "id": "adi-01",
+   "audio": "audio/adi-01.wav",
+   "bytes": 118828,
+   "duration_s": 3.71,
+   "source": "adi",
+   "source_label": "ADI-20 validation (in-domain)",
+   "program": null,
+   "true": "UAE",
+   "pred": "UAE",
+   "correct": true,
+   "confidence": 0.9941,
+   "bucket": "confident-correct",
+   "probs": [
+    7e-05,
+    3e-05,
+    0.00013,
+    0.0004,
+    0.00037,
+    4e-05,
+    5e-05,
+    0.00033,
+    0.00124,
+    9e-05,
+    0.00043,
+    0.00018,
+    0.0001,
+    0.00096,
+    7e-05,
+    2e-05,
+    0.00012,
+    0.00113,
+    0.99414,
+    9e-05
+   ],
+   "top5": [
+    [
+     "UAE",
+     0.9941
+    ],
+    [
+     "KUW",
+     0.0012
+    ],
+    [
+     "SYR",
+     0.0011
+    ],
+    [
+     "OMA",
+     0.001
+    ],
+    [
+     "LIB",
+     0.0004
+    ]
+   ],
+   "entropy": 0.05,
+   "candidates": [
+    "IRA",
+    "JOR",
+    "KSA",
+    "KUW",
+    "LEB",
+    "LIB",
+    "MAU",
+    "MOR",
+    "OMA",
+    "PAL",
+    "SYR",
+    "UAE"
+   ]
+  },
+  {
+   "id": "adi-02",
+   "audio": "audio/adi-02.wav",
+   "bytes": 122924,
+   "duration_s": 3.84,
+   "source": "adi",
+   "source_label": "ADI-20 validation (in-domain)",
+   "program": null,
+   "true": "KUW",
+   "pred": "KUW",
+   "correct": true,
+   "confidence": 0.3626,
+   "bucket": "close-call",
+   "probs": [
+    0.00292,
+    0.03231,
+    0.01633,
+    0.00275,
+    0.00595,
+    0.01051,
+    0.00453,
+    0.00311,
+    0.3626,
+    0.00827,
+    0.03704,
+    0.00525,
+    0.01879,
+    0.02596,
+    0.00184,
+    0.3626,
+    0.00497,
+    0.00412,
+    0.02953,
+    0.0606
+   ],
+   "top5": [
+    [
+     "QAT",
+     0.3626
+    ],
+    [
+     "KUW",
+     0.3626
+    ],
+    [
+     "YEM",
+     0.0606
+    ],
+    [
+     "LIB",
+     0.037
+    ],
+    [
+     "BAH",
+     0.0323
+    ]
+   ],
+   "entropy": 1.761,
+   "candidates": [
+    "IRA",
+    "JOR",
+    "KSA",
+    "KUW",
+    "LEB",
+    "LIB",
+    "MAU",
+    "MOR",
+    "OMA",
+    "PAL",
+    "SYR",
+    "UAE"
+   ]
+  },
+  {
+   "id": "adi-03",
+   "audio": "audio/adi-03.wav",
+   "bytes": 167980,
+   "duration_s": 5.25,
+   "source": "adi",
+   "source_label": "ADI-20 validation (in-domain)",
+   "program": null,
+   "true": "OMA",
+   "pred": "OMA",
+   "correct": true,
+   "confidence": 0.9947,
+   "bucket": "confident-correct",
+   "probs": [
+    8e-05,
+    3e-05,
+    0.00026,
+    0.0003,
+    0.00011,
+    0.00046,
+    0.00065,
+    0.00051,
+    0.00014,
+    0.00032,
+    9e-05,
+    0.00136,
+    0.00012,
+    0.99466,
+    1e-05,
+    7e-05,
+    0.00013,
+    0.00036,
+    4e-05,
+    0.00031
+   ],
+   "top5": [
+    [
+     "OMA",
+     0.9947
+    ],
+    [
+     "MAU",
+     0.0014
+    ],
+    [
+     "JOR",
+     0.0007
+    ],
+    [
+     "KSA",
+     0.0005
+    ],
+    [
+     "IRA",
+     0.0005
+    ]
+   ],
+   "entropy": 0.047,
+   "candidates": [
+    "IRA",
+    "JOR",
+    "KSA",
+    "KUW",
+    "LEB",
+    "LIB",
+    "MAU",
+    "MOR",
+    "OMA",
+    "PAL",
+    "SYR",
+    "UAE"
+   ]
+  }
+ ]
+}
