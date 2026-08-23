@@ -4,6 +4,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Arabic Spoken Dialect Identification — NADI-2026</title>
+<meta name="description" content="A 20-way Arabic spoken dialect identifier for NADI-2026 Subtask 2. Press play and watch the model decide: 93.3% out of domain, above its own in-domain validation.">
+<meta name="author" content="KAUST Academy">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#F3F3F0">
+<link rel="canonical" href="__BASE__/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Arabic Spoken Dialect Identification">
+<meta property="og:title" content="Listen to a model make up its mind">
+<meta property="og:description" content="Twenty Arabic dialects, one speech encoder. 93.3% out of domain — above its own in-domain validation.">
+<meta property="og:url" content="__BASE__/">
+<meta property="og:image" content="__BASE__/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A speech waveform drawn in ink on paper, above the title 'Listen to a model make up its mind'.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Listen to a model make up its mind">
+<meta name="twitter:description" content="Twenty Arabic dialects, one speech encoder. 93.3% out of domain.">
+<meta name="twitter:image" content="__BASE__/og.png">
+
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
@@ -228,7 +251,7 @@ addEventListener('error',()=>document.documentElement.className='');
   <div class="hero">
     <p class="kicker rv"><canvas id="kick"></canvas> Twenty Arabic dialects · one speech encoder</p>
     <h1 class="rv">Listen to a model make up its mind.</h1>
-    <p class="lede rv">Press play and watch the probability separate as the audio arrives — spread across the Maghreb at first, then collapsing onto one country. It lands correctly <b data-fig="broadcast">93.3%</b> of the time on broadcast audio it has never heard, which is <b data-fig="gap">2.4 points</b> above its own clean-corpus validation.</p>
+    <p class="lede rv">Press play and watch the probability separate as the audio arrives — spread across the Maghreb at first, then collapsing onto one country. It lands correctly <b data-fig="broadcast">93.3%</b> of the time <b>out of domain</b>, which is <b data-fig="gap">2.4 points</b> above its own in-domain validation.</p>
     <div class="actions rv">
       <button class="btn" id="heroPlay">▶ Play a clip</button>
       <a class="btn g" href="#method">How it works</a>
@@ -240,7 +263,7 @@ addEventListener('error',()=>document.documentElement.className='');
     <div class="flag rv"><b>Simulated</b><span>The probabilities below are simulated, not model output — the page was built before the final inference pass. Every number is replaced with real output before submission, and this notice disappears with it.</span></div>
 
     <div class="dbar rv">
-      <div class="l">clip <b id="clipId">casa-03</b> · <b id="clipSrc">broadcast, held-out program</b> <span class="tagpill" id="clipBucket"></span></div>
+      <div class="l">clip <b id="clipId">casa-03</b> · <b id="clipSrc">out-of-domain, held-out program</b> <span class="tagpill" id="clipBucket"></span></div>
       <div class="chips" id="chips"></div>
     </div>
     <p class="curation" id="curation"></p>
@@ -277,22 +300,22 @@ addEventListener('error',()=>document.documentElement.className='');
   <section id="method">
     <p class="eyebrow rv"><canvas class="emark"></canvas> Method</p>
     <h2 class="rv">The hard part was never the accuracy.</h2>
-    <p class="sub rv">The model fits the ADI-20 corpus comfortably and generalises far worse to broadcast audio, which is what the hidden test set is made of. Everything here exists to attack that gap.</p>
+    <p class="sub rv">The model fits its training corpus comfortably and generalises far worse out of domain — which is exactly what the hidden test set is. Everything here exists to attack that gap.</p>
     <div class="steps">
-      <div class="step rv"><canvas class="stepc" data-mode="0"></canvas><span class="n">01</span><h3>Fine-tune</h3><p>A gated Arabic ASR encoder gets a classification head over mask-aware pooled states. Dialect cues sit disproportionately in the intermediate layers, so every layer is weighted rather than only the last.</p></div>
-      <div class="step rv"><canvas class="stepc" data-mode="1"></canvas><span class="n">02</span><h3>Split honestly</h3><p>The broadcast corpus is cut program-disjointly. One half selects the checkpoint. The other half never influences that choice, so its number is not measured on the clips that produced it.</p></div>
-      <div class="step rv"><canvas class="stepc" data-mode="2"></canvas><span class="n">03</span><h3>Keep it stable</h3><p>One optimizer, built up front, with per-group learning rates and layerwise decay. Only which parameters are trainable ever changes, so the schedule never resets underneath the model mid-run.</p></div>
+      <div class="step rv"><canvas class="stepc" data-mode="0"></canvas><span class="n">01</span><h3>Fine-tune</h3><p>An Arabic speech encoder is fine-tuned for 20-way dialect. The cues that identify a dialect sit in the middle layers, not just the last one, so every layer is weighted.</p></div>
+      <div class="step rv"><canvas class="stepc" data-mode="1"></canvas><span class="n">02</span><h3>Split honestly</h3><p>The out-of-domain corpus is split by program, not by clip. One half picks the checkpoint. The other half never influences that choice, so its score is not measured on the clips that produced it.</p></div>
+      <div class="step rv"><canvas class="stepc" data-mode="2"></canvas><span class="n">03</span><h3>Keep it stable</h3><p>One optimizer, built once, with a learning-rate schedule that never restarts mid-run. That is most of what kept long runs from drifting.</p></div>
     </div>
   </section>
 
   <section id="result">
     <p class="eyebrow rv"><canvas class="emark"></canvas> Result</p>
     <h2 class="rv">The gap closed, then inverted.</h2>
-    <p class="sub rv">Out-of-domain accuracy above in-domain accuracy is not a normal outcome. It is the single number worth taking from this project.</p>
+    <p class="sub rv">Scoring higher out of domain than in domain is not a normal outcome. It is the single number worth taking from this project.</p>
     <div class="rv">
       <table>
-        <caption>Accuracy (%) by checkpoint. Broadcast is the program-disjoint held-out half.</caption>
-        <tr><th>checkpoint</th><th class="n">in-domain</th><th class="n">broadcast</th><th class="n">gap</th></tr>
+        <caption>Accuracy (%) by checkpoint. Out-of-domain is the program-disjoint held-out split.</caption>
+        <tr><th>checkpoint</th><th class="n">in-domain</th><th class="n">out-of-domain</th><th class="n">gap</th></tr>
         <tr><td>whisper-small, no aug</td><td class="n">74.5</td><td class="n">36.4</td><td class="n g">+38.1</td></tr>
         <tr><td>cohere-ar, tuned</td><td class="n">89.7</td><td class="n">65.1</td><td class="n g">+24.6</td></tr>
         <tr><td>+ augmentation, no reverb</td><td class="n">90.5</td><td class="n">64.3</td><td class="n g">+26.2</td></tr>
@@ -519,11 +542,11 @@ KSA:'السعودية',KUW:'الكويت',LEB:'لبنان',LIB:'ليبيا',MAU:
 PAL:'فلسطين',QAT:'قطر',SUD:'السودان',SYR:'سوريا',UAE:'الإمارات',YEM:'اليمن'};
 
 let DEMO=[
- {id:'casa-03',src:'broadcast, held-out program',dur:4.20,truth:'MOR',seed:2,
+ {id:'casa-03',src:'out-of-domain, held-out program',dur:4.20,truth:'MOR',seed:2,
   probs:{MOR:.914,ALG:.041,TUN:.022,MAU:.011,LIB:.006,MSA:.003,EGY:.002,SUD:.001}},
- {id:'casa-07',src:'broadcast, held-out program',dur:3.60,truth:'EGY',seed:9,
+ {id:'casa-07',src:'out-of-domain, held-out program',dur:3.60,truth:'EGY',seed:9,
   probs:{EGY:.883,SUD:.052,MSA:.031,PAL:.012,JOR:.009,LIB:.007,SYR:.004,IRA:.002}},
- {id:'casa-11',src:'broadcast, held-out program',dur:5.10,truth:'ALG',seed:17,
+ {id:'casa-11',src:'out-of-domain, held-out program',dur:5.10,truth:'ALG',seed:17,
   probs:{MOR:.471,ALG:.362,TUN:.098,MAU:.031,LIB:.017,MSA:.011,EGY:.006,SUD:.004}},
  {id:'adi-02',src:'ADI-20 validation, in-domain',dur:4.80,truth:'KSA',seed:23,
   probs:{KSA:.792,KUW:.084,BAH:.048,QAT:.031,UAE:.021,OMA:.012,IRA:.008,YEM:.004}}
@@ -740,6 +763,16 @@ requestAnimationFrame(loop);
 let REAL = false;
 const AUDIO = document.getElementById('au');
 
+/* The exporter writes 'Broadcast audio (Casablanca)...'; the page speaks in terms of
+   domain, not recording format. Applied here so existing exports read correctly too. */
+function reword(t){
+  return String(t)
+    .replace(/^Broadcast audio \(Casablanca\), held-out program$/,
+             'Out-of-domain (Casablanca), held-out program')
+    .replace(/^ADI-20 validation \(in-domain\)$/, 'In-domain (ADI-20 validation)')
+    .replace(/broadcast/gi, 'out-of-domain');
+}
+
 const grab = async (u) => { try{ const r = await fetch(u,{cache:'no-store'});
   return r.ok ? await r.json() : null; }catch(e){ return null; } };
 
@@ -781,7 +814,7 @@ async function hydrate(){
     /* the caption is rebuilt with the rows — writing innerHTML would drop it */
     let html = '<caption></caption>'+
                '<tr><th>checkpoint</th><th class="n">in-domain</th>'+
-               '<th class="n">broadcast</th><th class="n">gap</th></tr>';
+               '<th class="n">out-of-domain</th><th class="n">gap</th></tr>';
     let anySel = false;
     results.table.forEach(function(r){
       if(!r.holdout) anySel = true;
@@ -793,7 +826,7 @@ async function hydrate(){
     tb.innerHTML = html;
     const cap = document.querySelector('#result caption');
     if(cap) cap.textContent =
-      'Accuracy (%) by checkpoint. Broadcast is the program-disjoint held-out half.' +
+      'Accuracy (%) by checkpoint. Out-of-domain is the program-disjoint held-out split.' +
       (anySel ? ' * predates program-disjoint splitting; selection half shown.' : '');
     const h = results.headline;
     if(h) document.querySelectorAll('[data-fig]').forEach(function(el){
@@ -833,7 +866,7 @@ async function hydrate(){
     const synthetic = demo.synthetic===true || demo.clips.some(function(c){return c.synthetic;});
     DEMO = demo.clips.map(function(c,i){
       return {
-        id: c.id, src: c.source_label || c.source || '',
+        id: c.id, src: reword(c.source_label || c.source || ''),
         dur: c.duration_s || 4, truth: c['true'], seed: (i*7+3),
         bucket: c.bucket || '', correct: !!c.correct, pred: c.pred,
         audio: c.audio ? base+c.audio : null,
@@ -885,31 +918,6 @@ async function hydrate(){
 hydrate();
 
 
-/* ---------- diagnostic panel: add ?debug to the URL ----------
-   Temporary. Reports what the page actually observes, so a motion problem is
-   read off the screen instead of guessed at. Delete before shipping. */
-if(location.search.includes('debug')){
-  const d=document.createElement('div');
-  d.style.cssText='position:fixed;left:10px;bottom:10px;z-index:999;background:#14161A;color:#F3F3F0;'+
-    'font:11px/1.7 ui-monospace,monospace;padding:10px 13px;white-space:pre;max-width:92vw';
-  document.body.appendChild(d);
-  let n=0,last=performance.now(),fps=0;
-  (function up(){
-    n++; const now=performance.now();
-    if(now-last>500){ fps=Math.round(n/((now-last)/1000)); n=0; last=now; }
-    const vis=anims.filter(a=>a.vis).length;
-    d.textContent=
-      `prefers-reduced-motion : ${RM}                 <- if true, motion is OFF by design\n`+
-      `rAF loop running       : ${started}\n`+
-      `frames per second      : ${fps}\n`+
-      `canvases registered    : ${anims.length}   on screen: ${vis}\n`+
-      `page clock T           : ${T.toFixed(2)}s\n`+
-      `ledger clock           : ${ledgerT0===null?'not started':ledgerT0.toFixed(2)+'s'}\n`+
-      `demo playing           : ${playing}   progress: ${prog.toFixed(2)}\n`+
-      `device pixel ratio     : ${DPR}`;
-    requestAnimationFrame(up);
-  })();
-}
 </script>
 </body>
 </html>
