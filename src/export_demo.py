@@ -113,6 +113,10 @@ def get_args():
                    help="abort if the exported audio exceeds this. A landing page that ships "
                         "40 MB of WAV is a landing page nobody waits for.")
 
+    p.add_argument("--correct-frac", type=float, default=0.75, metavar="F",
+                   help="fraction of exported clips the model got RIGHT. The rest are "
+                        "real failures, kept deliberately -- a demo that only shows wins "
+                        "is an advertisement. 0.75 of 12 clips means 9 right, 3 wrong.")
     p.add_argument("--tta-seconds", type=float, default=None, metavar="S",
                    help="model input window. Default: the longest --crop-set value the "
                         "checkpoint trained on (12s), which dominates activation memory. "
@@ -224,11 +228,25 @@ def load_casablanca_holdout(seed, val_frac, select_frac):               # v5:337
 # ---------------------------------------------------------------------------------
 # Selection
 # ---------------------------------------------------------------------------------
-def pick_clips(probs, labels, n, rng):
-    """Choose a spread of confident-correct, confident-wrong and close calls.
+def pick_clips(probs, labels, n, rng, correct_frac=0.75):
+    """Choose a spread of correct and incorrect clips, in a controlled ratio.
 
     Returns [(row_index, bucket_name)]. Buckets are recorded in demo.json so the page
     can label a failure as a failure instead of quietly omitting it.
+
+    WHY THE RATIO IS A TARGET AND NOT AN EMERGENT PROPERTY
+    ------------------------------------------------------
+    An earlier version set percentages per BUCKET (40% confident-correct, 25%
+    confident-wrong, 35% close-call) and let correctness fall out of that. Close
+    calls are mostly wrong by construction, so the exported set came out half
+    wrong -- next to a headline claiming 93%, which reads as though the headline
+    is inflated rather than as an honest sample.
+
+    So correctness is chosen first: `correct_frac` of the clips are ones the model
+    got right, the rest are failures. Within each side the selection still prefers
+    an interesting spread -- the most confident successes, the most confident
+    errors, and the narrowest margins -- because a page of easy wins persuades
+    nobody either.
     """
     top2 = np.argsort(-probs, axis=1)[:, :2]
     pred = top2[:, 0]
@@ -236,44 +254,71 @@ def pick_clips(probs, labels, n, rng):
     margin = conf - probs[np.arange(len(probs)), top2[:, 1]]
     correct = pred == labels
 
-    quotas = [("confident-correct", max(1, round(n * 0.40))),
-              ("confident-wrong",   max(1, round(n * 0.25))),
-              ("close-call",        max(1, round(n * 0.35)))]
+    def by(mask, key, desc):
+        cand = np.flatnonzero(mask)
+        if not len(cand):
+            return cand
+        return cand[np.argsort(-key[cand] if desc else key[cand])]
 
-    def rank(bucket):
-        if bucket == "confident-correct":
-            cand = np.flatnonzero(correct & (conf >= 0.60))
-            return cand[np.argsort(-conf[cand])] if len(cand) else cand
-        if bucket == "confident-wrong":
-            cand = np.flatnonzero(~correct & (conf >= 0.45))
-            return cand[np.argsort(-conf[cand])] if len(cand) else cand
-        cand = np.flatnonzero(margin <= 0.25)
-        return cand[np.argsort(margin[cand])] if len(cand) else cand
+    # Candidate pools, with the share of the quota each may supply. The shares stop
+    # the first pool draining the whole quota: six clips at p=0.99 say less about a
+    # model than four clear wins plus two it only just got right.
+    right_pools = [("confident-correct", by(correct & (conf >= 0.60), conf, True), 0.67),
+                   ("close-call",        by(correct & (margin <= 0.25), margin, False), 0.33),
+                   ("correct",           by(correct, conf, True), 1.0)]
+    wrong_pools = [("confident-wrong",   by(~correct & (conf >= 0.45), conf, True), 0.5),
+                   ("close-call",        by(~correct & (margin <= 0.25), margin, False), 0.5),
+                   ("wrong",             by(~correct, conf, True), 1.0)]
+
+    n_wrong = min(n, max(0, int(round(n * (1.0 - correct_frac)))))
+    n_right = n - n_wrong
 
     chosen, used, seen_country = [], set(), {}
-    for bucket, quota in quotas:
-        taken = 0
-        for i in rank(bucket):
-            if taken >= quota:
-                break
-            i = int(i)
-            if i in used:
-                continue
-            # Spread across countries so the demo is not four clips of the same dialect.
-            c = int(labels[i])
-            if seen_country.get(c, 0) >= 2:
-                continue
-            used.add(i)
-            seen_country[c] = seen_country.get(c, 0) + 1
-            chosen.append((i, bucket))
-            taken += 1
 
-    # Backfill from whatever is left if a bucket could not be filled -- a checkpoint with
-    # no confident errors in the pool is a good problem, not a reason to abort.
-    if len(chosen) < n:
+    def take(pools, k, spread_cap=2, use_shares=True):
+        taken = 0
+        for bucket, pool, share in pools:
+            cap = max(1, int(math.ceil(k * share))) if use_shares else k
+            from_pool = 0
+            for i in pool:
+                if taken >= k or from_pool >= cap:
+                    break
+                i = int(i)
+                if i in used:
+                    continue
+                # Spread across countries so the demo is not four clips of one dialect.
+                c = int(labels[i])
+                if seen_country.get(c, 0) >= spread_cap:
+                    continue
+                used.add(i)
+                seen_country[c] = seen_country.get(c, 0) + 1
+                chosen.append((i, bucket))
+                taken += 1
+                from_pool += 1
+        return taken
+
+    got_right = take(right_pools, n_right)
+    got_wrong = take(wrong_pools, n_wrong)
+
+    # Relax the per-country cap before giving up -- a narrow pool should cost
+    # variety, not the requested ratio.
+    if got_right < n_right:
+        got_right += take(right_pools, n_right - got_right, spread_cap=99, use_shares=False)
+    if got_wrong < n_wrong:
+        got_wrong += take(wrong_pools, n_wrong - got_wrong, spread_cap=99, use_shares=False)
+
+    if got_right + got_wrong < n:
+        # A checkpoint with too few confident errors in the pool is a good problem,
+        # not a reason to abort.
         rest = [i for i in rng.permutation(len(probs)) if int(i) not in used]
         for i in rest[:n - len(chosen)]:
-            chosen.append((int(i), "correct" if correct[int(i)] else "wrong"))
+            i = int(i)
+            used.add(i)
+            chosen.append((i, "correct" if correct[i] else "wrong"))
+
+    n_ok = sum(1 for i, _ in chosen if correct[i])
+    print(f"  selection: {n_ok}/{len(chosen)} correct "
+          f"(target {n_right}/{n}) -- a CURATED spread, not an accuracy estimate")
 
     rng.shuffle(chosen)
     return chosen[:n]
@@ -336,7 +381,7 @@ def run_source(model, fe, ds, name, source_label, n_want, rng, out_dir, manifest
           f"(sanity check against the run's reported number)")
 
     present = sorted({COUNTRIES[int(c)] for c in labels_ok})
-    picks = pick_clips(probs_ok, labels_ok, n_want, rng)
+    picks = pick_clips(probs_ok, labels_ok, n_want, rng, ARGS.correct_frac)
 
     audio_dir = os.path.join(out_dir, "audio")
     os.makedirs(audio_dir, exist_ok=True)

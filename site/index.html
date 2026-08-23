@@ -102,6 +102,14 @@ h1{font-weight:700;font-size:clamp(2.5rem,6.6vw,4.6rem);line-height:.96;letter-s
   background:var(--paper-2);transition:background .18s,color .18s}
 .chip:hover{color:var(--ink-solid)}
 .chip[aria-pressed="true"]{background:var(--ink-solid);color:var(--paper)}
+.chip.miss{box-shadow:inset 0 -2px 0 var(--no)}
+.chip.miss[aria-pressed="true"]{background:var(--no);color:#fff;box-shadow:none}
+.curation{font-family:var(--mono);font-size:.68rem;line-height:1.75;color:var(--ink-3);
+  margin:0 0 var(--s5);max-width:76ch}
+.curation b{color:var(--ink-2);font-weight:500}
+.tagpill{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);border:1px solid var(--rule);padding:2px 7px;margin-left:6px}
+.tagpill.miss{color:var(--no);border-color:rgba(179,52,31,.35)}
 .chip.wrongclip[aria-pressed="true"]{background:var(--no)}
 
 .stage{display:grid;grid-template-columns:1fr 316px;gap:var(--s6);align-items:start}
@@ -232,9 +240,10 @@ addEventListener('error',()=>document.documentElement.className='');
     <div class="flag rv"><b>Simulated</b><span>The probabilities below are simulated, not model output — the page was built before the final inference pass. Every number is replaced with real output before submission, and this notice disappears with it.</span></div>
 
     <div class="dbar rv">
-      <div class="l">clip <b id="clipId">casa-03</b> · <b id="clipSrc">broadcast, held-out program</b></div>
+      <div class="l">clip <b id="clipId">casa-03</b> · <b id="clipSrc">broadcast, held-out program</b> <span class="tagpill" id="clipBucket"></span></div>
       <div class="chips" id="chips"></div>
     </div>
+    <p class="curation" id="curation"></p>
 
     <div class="stage">
       <div class="rv">
@@ -627,6 +636,11 @@ function load(c){
   try{ AUDIO.pause(); AUDIO.src=c.audio||''; }catch(e){}
   document.getElementById('clipId').textContent=c.id;
   document.getElementById('clipSrc').textContent=c.src;
+  const bk=document.getElementById('clipBucket');
+  if(bk){
+    bk.textContent = c.bucket ? c.bucket.replace(/-/g,' ') : '';
+    bk.className = 'tagpill' + (c.correct===false ? ' miss' : '');
+  }
   document.getElementById('tEnd').textContent=c.dur.toFixed(2);
   document.getElementById('tNow').textContent='0.00';
   buildRows(); paint(posterior(1));
@@ -821,11 +835,13 @@ async function hydrate(){
       return {
         id: c.id, src: c.source_label || c.source || '',
         dur: c.duration_s || 4, truth: c['true'], seed: (i*7+3),
+        bucket: c.bucket || '', correct: !!c.correct, pred: c.pred,
         audio: c.audio ? base+c.audio : null,
         probs: Array.isArray(c.probs) ? topN(c.probs,8) : c.probs
       };
     });
     REAL = !synthetic;
+    const nWrong = DEMO.filter(function(c){ return !c.correct; }).length;
     if(REAL){
       const flag = document.querySelector('.flag'); if(flag) flag.remove();
       const note = document.getElementById('note');
@@ -834,18 +850,34 @@ async function hydrate(){
         'trained on. <b>The sweep toward it is illustrative</b> \u2014 the export records the ' +
         'model\u2019s final distribution, not one per frame.';
     }
+    /* Open on a success. Which clip is first is an artefact of export order, and
+       leading with a failure misrepresents a model that is right 93% of the time. */
+    let startIdx = DEMO.findIndex(function(c){ return c.correct && c.bucket === 'confident-correct'; });
+    if(startIdx < 0) startIdx = DEMO.findIndex(function(c){ return c.correct; });
+    if(startIdx < 0) startIdx = 0;
+
     chips.innerHTML = '';
     DEMO.forEach(function(c,i){
       const b = document.createElement('button');
-      b.className = 'chip'; b.textContent = c.id;
-      b.setAttribute('aria-pressed', i===0 ? 'true' : 'false');
+      b.className = 'chip' + (c.correct ? '' : ' miss');
+      b.textContent = c.id;
+      b.title = (c.bucket || '') + (c.correct ? ' - correct' : ' - wrong, predicted ' + c.pred);
+      b.setAttribute('aria-pressed', i===startIdx ? 'true' : 'false');
       b.onclick = function(){
         [].forEach.call(chips.children, function(x){ x.setAttribute('aria-pressed','false'); });
         b.setAttribute('aria-pressed','true'); load(c); start();
       };
       chips.appendChild(b);
     });
-    load(DEMO[0]);
+
+    /* Say plainly that the set is curated. Without this a visitor reads the
+       failure rate of a deliberately hard sample as the model's accuracy. */
+    const cur = document.getElementById('curation');
+    if(cur) cur.innerHTML = DEMO.length + ' clips, chosen to include <b>' + nWrong +
+      ' real failures</b>. A deliberate spread, not an accuracy estimate \u2014 the ' +
+      'measured figures are in the table below.';
+
+    load(DEMO[startIdx]);
     for(const c of DEMO){ if(c.audio) c.env = await envelopeOf(c.audio); }
     scopeDirty = true;
   }

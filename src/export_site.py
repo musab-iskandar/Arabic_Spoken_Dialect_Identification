@@ -101,6 +101,8 @@ def get_args():
     p.add_argument("--clip-seconds", type=float, default=8.0)
     p.add_argument("--max-total-mb", type=float, default=12.0)
     p.add_argument("--tta", type=int, default=0)
+    p.add_argument("--correct-frac", type=float, default=0.75,
+                   help="fraction of demo clips the model got right (rest are real failures)")
     p.add_argument("--tta-seconds", type=float, default=None,
                    help="model input window in seconds; shorter costs less memory")
     p.add_argument("--precision", default="bf16", choices=["bf16", "fp16", "fp32"],
@@ -316,6 +318,7 @@ def main():
                "--clip-seconds", str(a.clip_seconds),
                "--max-total-mb", str(a.max_total_mb),
                "--tta", str(a.tta),
+               "--correct-frac", str(a.correct_frac),
                "--precision", a.precision,
                "--batch-size", str(a.batch_size)]
         if a.tta_seconds is not None:
