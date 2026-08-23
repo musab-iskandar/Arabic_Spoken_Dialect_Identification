@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://REPLACE-ME.vercel.app/sitemap.xml
+Sitemap: https://asdi-sigma.vercel.app/sitemap.xml
