@@ -231,9 +231,14 @@ def build_results(runs_path, out_path):
         if idacc is None or broadcast is None:
             missing.append(f"{name} (no usable metrics)")
             continue
+        # Whether this run trained on the out-of-domain corpus. Without it the table
+        # reads as a generalisation curve, when the jump is largely the point at which
+        # the target domain entered training.
+        tc = str(r.get("cli.train_on_casa") or "").strip().lower() in ("true", "1", "yes")
         table.append({
             "label": label,
             "run": name,
+            "trained_on_ood": tc,
             "in_domain": round(idacc, 1),
             "broadcast": round(broadcast, 1),
             "gap": round(idacc - broadcast, 1),
@@ -269,8 +274,9 @@ def build_results(runs_path, out_path):
     for t in table:
         mark = "  <- headline" if t is best else ""
         star = "" if t["holdout"] else "   (selection half, not held out)"
+        ood = "  [trained on OOD corpus]" if t["trained_on_ood"] else ""
         print(f"    {t['label']:<26s} {t['in_domain']:>5.1f}  {t['broadcast']:>5.1f}  "
-              f"{t['gap']:>+6.1f}{star}{mark}")
+              f"{t['gap']:>+6.1f}{ood}{star}{mark}")
     return doc
 
 
