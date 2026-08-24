@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Not found — Arabic Spoken Dialect Identification</title>
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#F3F3F0">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F3F3F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131417" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,6 +19,18 @@
   --display:'Instrument Sans',system-ui,sans-serif;
   --mono:'Geist Mono',ui-monospace,monospace;
   --arabic:'Noto Kufi Arabic',sans-serif;
+}
+/* Same slate and chalk as the page this one is standing in for. No control
+   here — a 404 inherits the choice the reader already made on the site. */
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#131417; --ink:#E9E9E4; --ink-2:#A8ADB6; --ink-3:#7F858F;
+    --rule:rgba(233,233,228,.13); --say:#7A8DFF;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131417; --ink:#E9E9E4; --ink-2:#A8ADB6; --ink-3:#7F858F;
+  --rule:rgba(233,233,228,.13); --say:#7A8DFF;
 }
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;background:var(--paper);color:var(--ink);
@@ -45,6 +59,19 @@ footer{font-family:var(--mono);font-size:.69rem;color:var(--ink-3);
   display:flex;justify-content:space-between;gap:1.5rem;flex-wrap:wrap}
 .ar{font-family:var(--arabic)}
 </style>
+
+<script>
+/* Applied before the first paint, for the same reason as on the main page. */
+(function(){
+  var root=document.documentElement, t=null;
+  try{ t=localStorage.getItem('asdi-theme') }catch(e){}
+  var dark = t==='dark' || (t!=='light' && matchMedia('(prefers-color-scheme: dark)').matches);
+  if(t==='light'||t==='dark'){ root.setAttribute('data-theme',t); root.style.colorScheme=t }
+  var m=document.head.querySelectorAll('meta[name="theme-color"]');
+  for(var i=1;i<m.length;i++) m[i].parentNode.removeChild(m[i]);
+  if(m[0]){ m[0].removeAttribute('media'); m[0].setAttribute('content', dark?'#131417':'#F3F3F0') }
+})();
+</script>
 </head>
 <body>
 
