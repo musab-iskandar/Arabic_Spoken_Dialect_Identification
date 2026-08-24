@@ -95,12 +95,20 @@ header{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--paper
 
 /* ---------- hero ---------- */
 .hero{padding:var(--s8) 0 var(--s6);position:relative}
-h1{font-weight:600;font-size:clamp(1.45rem,2.9vw,2.15rem);line-height:1.24;
-  letter-spacing:-.022em;margin:0 0 var(--s5);max-width:44ch}
+h1{font-weight:700;font-size:clamp(2.1rem,5.2vw,3.5rem);line-height:1.02;
+  letter-spacing:-.035em;margin:0 0 var(--s6);max-width:18ch}
 .lede{font-size:1.1rem;line-height:1.56;color:var(--ink-2);max-width:54ch;margin:0 0 var(--s6)}
 .lede b{color:var(--ink-solid);font-weight:600}
 .kicker{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:0 0 var(--s5)}
 .kicker canvas{width:34px;height:12px}
+.objective{border-left:2px solid var(--say-solid);padding:2px 0 2px var(--s5);
+  margin:0 0 var(--s6);max-width:62ch}
+.olabel{font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--say-solid);margin:0 0 10px}
+.otext{font-size:1.05rem;line-height:1.6;color:var(--ink-2);margin:0}
+.onote{font-family:var(--mono);font-size:.72rem;line-height:1.75;color:var(--ink-3);
+  margin:var(--s4) 0 0}
+
 .actions{display:flex;gap:var(--s3);flex-wrap:wrap;align-items:center}
 .btn{display:inline-flex;align-items:center;gap:9px;background:var(--ink-solid);color:var(--paper);border:0;
   font-family:var(--mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;padding:14px 20px;cursor:pointer;
@@ -281,17 +289,21 @@ addEventListener('error',()=>document.documentElement.className='');
 
   <div class="hero">
     <p class="kicker rv"><canvas id="kick"></canvas> NADI-2026 Subtask 2 · fourth place</p>
-    <h1 class="rv">Classify spoken Arabic into one of 11 country-level dialects under
-    cross-domain conditions, where the test set differs in domain and source from training
-    and development data.</h1>
-    <p class="lede rv">A secondary-domain development set is provided alongside the primary
-    one. The label space is the full 20-class inventory and admits no abstention — a system
-    scores over all twenty, while the blind set covers only a subset.</p>
+    <h1 class="rv">Arabic Spoken Dialect Identification</h1>
+
+    <div class="objective rv">
+      <p class="olabel">Objective</p>
+      <p class="otext">Classify spoken Arabic into one of 11 country-level dialects under
+      cross-domain conditions, where the test set differs in domain and source from training
+      and development data. For domain generalization, a secondary-domain development set is
+      provided alongside the primary development data.</p>
+      <p class="onote">The label space is the full 20-class inventory and admits no abstention:
+      a system scores over all twenty, while the blind set covers only a subset.</p>
+    </div>
+
     <div class="actions rv">
       <button class="btn" id="heroPlay">▶ Play a clip</button>
       <a class="btn g" href="#method">Method</a>
-    </div>
-    <div class="heroSpec rv"><canvas id="heroSpec"></canvas></div>
     </div>
     <div class="heroSpec rv"><canvas id="heroSpec"></canvas></div>
   </div>
