@@ -117,7 +117,7 @@
    this an anchor teleports, which reads as a page change rather than a move to
    another part of the same page. Declared once here so the five anchors and the
    one scripted scroll cannot drift apart again. */
-html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;background:var(--paper)}
 body{margin:0;background:var(--paper);color:var(--ink-solid);
   font-family:var(--display);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1120px;margin:0 auto;padding:0 var(--gutter)}
@@ -332,6 +332,25 @@ footer{margin-top:var(--s9)}
 .fbar{border-top:1px solid var(--rule);padding:var(--s5) 0 var(--s7);font-family:var(--mono);font-size:.69rem;
   color:var(--ink-3);display:flex;justify-content:space-between;gap:var(--s5);flex-wrap:wrap}
 .fbar a:hover{color:var(--say-solid)}
+
+/* ---------- theme change ----------
+   A wipe, not a dissolve. Every pixel is either the old theme or the new one,
+   with a moving boundary between them, so the page never washes through the
+   flat mid-grey that any colour interpolation has to pass through on its way
+   between two opposite schemes.
+
+   The View Transitions API snapshots the whole page — canvases included — so
+   the painted half needs no tween of its own. The cost is that those snapshots
+   are still images: ambient motion holds for the length of the sweep, then
+   resumes at its true live position. Where the API is missing the change is
+   instant, which is a better floor than a half-played animation. */
+::view-transition-image-pair(root){isolation:auto}
+::view-transition-old(root){animation:none;mix-blend-mode:normal}
+::view-transition-new(root){
+  animation:asdiWave .48s cubic-bezier(.4,0,.2,1) forwards;mix-blend-mode:normal}
+@media(prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none}
+}
 
 /* Reduced motion: no movement, but the FINISHED state — never the empty one. */
 @media(prefers-reduced-motion:reduce){
@@ -1067,7 +1086,9 @@ hydrate();
 
 /* ---------- the switch ----------
    A token swap reaches everything the CSS draws and nothing the canvas draws,
-   because those pixels were painted once with the old ink. Repaint them. */
+   because those pixels were painted once with the old ink — so the change is
+   applied and the canvases repainted in one synchronous step, and the sweep
+   animates between snapshots taken either side of it. */
 (function(){
   const btns = [...document.querySelectorAll('#themeCtl .ttb')];
   const root = document.documentElement;
@@ -1080,24 +1101,52 @@ hydrate();
     const dark = isDark();
     for(const b of btns) b.setAttribute('aria-pressed', String((b.dataset.set === 'dark') === dark));
   }
-  function repaint(){
-    readInk(); label();
-    /* still=false so the reduced-motion frames are redrawn too: they are
-       painted exactly once, and that once already happened. */
-    for(const a of anims){ a.still = false; a.draw(a, RM ? STATIC_T : T); }
+  /* still=false so the reduced-motion frames are redrawn too: they are
+     painted exactly once, and that once already happened. Time comes from the
+     clock rather than from T so the graphics stay in phase. */
+  function drawAll(){
+    const t = RM ? STATIC_T : performance.now()/1000;
+    for(const a of anims){ a.still = false; a.draw(a, t); }
     if(lastDist) paint(lastDist);
+  }
+
+  /* Tokens and painted pixels brought up to date in one synchronous step, so the
+     transition snapshots a page that is already fully in the new theme. */
+  function applyNow(next){
+    window.__theme.set(next);
+    label(); readInk(); drawAll();
+  }
+
+  /* The sweeping edge is built from the same kind of envelope the page draws
+     with, so what crosses the screen is the page's own signal, not a plain bar. */
+  function waveFront(xPct){
+    const pts = ['0% 0%'], N = 30;
+    for(let i = 0; i <= N; i++){
+      const y = i/N;
+      const w = (Math.sin(y*9.4)*0.5 + 0.5)*0.55 + (Math.sin(y*4.1 + 1.7)*0.5 + 0.5)*0.45;
+      pts.push((xPct + (w - 0.5)*7).toFixed(2) + '% ' + (y*100).toFixed(2) + '%');
+    }
+    pts.push('0% 100%');
+    return 'polygon(' + pts.join(',') + ')';
+  }
+  const st = document.createElement('style');
+  st.textContent = '@keyframes asdiWave{from{clip-path:' + waveFront(-8) +
+                   '}to{clip-path:' + waveFront(112) + '}}';
+  document.head.appendChild(st);
+
+  function change(next){
+    if(next !== null){ try{ localStorage.setItem(window.__theme.key, next) }catch(e){} }
+    /* No snapshot machinery, or the reader asked for less motion: swap outright.
+       No animation beats a half-played one. */
+    if(RM || !document.startViewTransition){ applyNow(next); return; }
+    document.startViewTransition(() => applyNow(next));
   }
 
   /* Clicking a segment always pins that choice, even the one already showing:
      it is how a reader takes the decision away from the OS. */
-  for(const b of btns) b.addEventListener('click', () => {
-    const next = b.dataset.set;
-    try{ localStorage.setItem(window.__theme.key, next) }catch(e){}
-    window.__theme.set(next);
-    repaint();
-  });
+  for(const b of btns) b.addEventListener('click', () => change(b.dataset.set));
   /* Until the reader chooses, the OS stays in charge — including mid-visit. */
-  const osChange = () => { if(!root.hasAttribute('data-theme')){ window.__theme.set(null); repaint() } };
+  const osChange = () => { if(!root.hasAttribute('data-theme')) change(null) };
   mq.addEventListener ? mq.addEventListener('change', osChange) : mq.addListener(osChange);
 
   label();
