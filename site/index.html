@@ -118,6 +118,24 @@
    another part of the same page. Declared once here so the five anchors and the
    one scripted scroll cannot drift apart again. */
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;background:var(--paper)}
+
+/* ---------- scrollbar ----------
+   The page has no border-radius anywhere, which made the native rounded thumb
+   the only curved shape on it. Squared off and inked at low alpha, it reads as
+   one more cell rather than a piece of operating system. Built from the same
+   tokens, so it follows the theme.
+   Kept at 11px: a hairline scrollbar looks tidy in a screenshot and is a poor
+   thing to try to grab. */
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:var(--paper);box-shadow:inset 1px 0 0 var(--rule-2)}
+::-webkit-scrollbar-thumb{background:rgba(var(--ink),.22);border:0}
+::-webkit-scrollbar-thumb:hover{background:rgba(var(--ink),.4)}
+::-webkit-scrollbar-corner{background:var(--paper)}
+/* Firefox has no ::-webkit-scrollbar. Gated so declaring it cannot switch
+   Chrome off the rules above, which is what happens if both are set. */
+@supports not selector(::-webkit-scrollbar){
+  html{scrollbar-color:rgba(var(--ink),.28) var(--paper)}
+}
 body{margin:0;background:var(--paper);color:var(--ink-solid);
   font-family:var(--display);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1120px;margin:0 auto;padding:0 var(--gutter)}
@@ -1139,7 +1157,11 @@ hydrate();
     /* No snapshot machinery, or the reader asked for less motion: swap outright.
        No animation beats a half-played one. */
     if(RM || !document.startViewTransition){ applyNow(next); return; }
-    document.startViewTransition(() => applyNow(next));
+    /* `ready` rejects whenever the browser declines to play the sweep: a second
+       toggle interrupting the first, or a tab that is not rendering. The theme
+       still applies either way, so that is an ordinary outcome here — but left
+       unhandled it surfaces as an uncaught InvalidStateError in the console. */
+    document.startViewTransition(() => applyNow(next)).ready.catch(() => {});
   }
 
   /* Clicking a segment always pins that choice, even the one already showing:
