@@ -4,25 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Arabic Spoken Dialect Identification — NADI-2026</title>
-<meta name="description" content="A 20-way Arabic spoken dialect identifier for NADI-2026 Subtask 2. Press play and watch the model decide: 93.3% on Casablanca programs held out of training, 90.9% on ADI-20 validation.">
+<meta name="description" content="AI Elites at NADI-2026 Subtask 2: country-level spoken Arabic dialect identification under domain shift. Selecting on out-of-domain accuracy. 52.51% on the blind test set, fourth place.">
 <meta name="author" content="KAUST Academy">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#F3F3F0">
-<link rel="canonical" href="https://musab-iskandar.github.io/Arabic_Spoken_Dialect_Identification/">
+<link rel="canonical" href="https://asdi-sigma.vercel.app/">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Arabic Spoken Dialect Identification">
-<meta property="og:title" content="Listen to a model make up its mind">
-<meta property="og:description" content="Twenty Arabic dialects, one speech encoder. 93.3% on Casablanca programs held out of training.">
-<meta property="og:url" content="https://musab-iskandar.github.io/Arabic_Spoken_Dialect_Identification/">
-<meta property="og:image" content="https://musab-iskandar.github.io/Arabic_Spoken_Dialect_Identification/og.png">
+<meta property="og:title" content="Selecting on out-of-domain accuracy">
+<meta property="og:description" content="Cross-domain spoken Arabic dialect identification. 52.51% on the blind test set, fourth place at NADI-2026 Subtask 2.">
+<meta property="og:url" content="https://asdi-sigma.vercel.app/">
+<meta property="og:image" content="https://asdi-sigma.vercel.app/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="A speech waveform drawn in ink on paper, above the title 'Listen to a model make up its mind'.">
+<meta property="og:image:alt" content="A speech waveform drawn in ink on paper, above the title 'Selecting on out-of-domain accuracy'.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Listen to a model make up its mind">
-<meta name="twitter:description" content="Twenty Arabic dialects, one speech encoder. 93.3% on held-out programs.">
-<meta name="twitter:image" content="https://musab-iskandar.github.io/Arabic_Spoken_Dialect_Identification/og.png">
+<meta name="twitter:title" content="Selecting on out-of-domain accuracy">
+<meta name="twitter:description" content="Cross-domain spoken Arabic dialect identification. 52.51% on the blind test, fourth place.">
+<meta name="twitter:image" content="https://asdi-sigma.vercel.app/og.png">
 
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -95,7 +95,8 @@ header{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--paper
 
 /* ---------- hero ---------- */
 .hero{padding:var(--s8) 0 var(--s6);position:relative}
-h1{font-weight:700;font-size:clamp(2.5rem,6.6vw,4.6rem);line-height:.96;letter-spacing:-.042em;margin:0 0 var(--s5);max-width:15ch}
+h1{font-weight:600;font-size:clamp(1.45rem,2.9vw,2.15rem);line-height:1.24;
+  letter-spacing:-.022em;margin:0 0 var(--s5);max-width:44ch}
 .lede{font-size:1.1rem;line-height:1.56;color:var(--ink-2);max-width:54ch;margin:0 0 var(--s6)}
 .lede b{color:var(--ink-solid);font-weight:600}
 .kicker{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin:0 0 var(--s5)}
@@ -194,6 +195,30 @@ code{font-family:var(--mono);font-size:.88em;background:var(--paper-2);padding:1
 .step h3{font-weight:600;font-size:1.24rem;letter-spacing:-.022em;margin:0 0 9px}
 .step p{margin:0;font-size:.9rem;line-height:1.62;color:var(--ink-2)}
 
+.part{border-top:1px solid var(--rule);padding:var(--s6) 0 var(--s2)}
+.dl{margin:0 0 var(--s4);display:grid;grid-template-columns:11rem 1fr;gap:10px var(--s5)}
+@media(max-width:640px){.dl{grid-template-columns:1fr;gap:2px var(--s3)}.dl dd{margin-bottom:10px}}
+.dl dt{font-family:var(--mono);font-size:.72rem;color:var(--ink-solid);padding-top:2px}
+.dl dd{margin:0;color:var(--ink-2);font-size:.92rem;line-height:1.6}
+.alsofig{font-family:var(--mono);font-size:.74rem;color:var(--ink-3);margin:var(--s5) 0 0;
+  line-height:2;letter-spacing:.02em}
+.alsofig b{color:var(--ink-solid);font-weight:500;font-variant-numeric:tabular-nums}
+.alsofig span{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase}
+.part h3{font-weight:700;font-size:1.4rem;letter-spacing:-.028em;margin:0 0 var(--s4);
+  display:flex;align-items:baseline;gap:12px}
+.part .pn{font-family:var(--mono);font-size:.68rem;font-weight:400;letter-spacing:.14em;
+  color:var(--ink-3)}
+.part p{color:var(--ink-2);line-height:1.62;margin:0 0 var(--s4);max-width:70ch;font-size:.95rem}
+.part p b{color:var(--ink-solid);font-weight:600}
+.part sup{font-size:.7em}
+.sh{font-weight:700;font-size:1.4rem;letter-spacing:-.028em;margin:var(--s7) 0 var(--s4)}
+.tw{overflow-x:auto;margin:var(--s5) 0}
+.tag{font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-3);margin-left:8px;white-space:nowrap}
+td.ind{padding-left:var(--s5);color:var(--ink-3)}
+tr.win td{color:var(--ink-solid);font-weight:600}
+tr.win td.n{color:var(--say-solid)}
+
 .figures{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);
   border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
 @media(max-width:720px){.figures{grid-template-columns:1fr}}
@@ -255,12 +280,18 @@ addEventListener('error',()=>document.documentElement.className='');
 <main class="wrap" id="top">
 
   <div class="hero">
-    <p class="kicker rv"><canvas id="kick"></canvas> Twenty Arabic dialects · one speech encoder</p>
-    <h1 class="rv">Listen to a model make up its mind.</h1>
-    <p class="lede rv">Press play and watch the probability separate as the audio arrives — spread across the Maghreb at first, then collapsing onto one country. It scores <b data-fig="ood">93.3%</b> on Casablanca programs held out of training, and <b data-fig="id">90.9%</b> on ADI-20 validation.</p>
+    <p class="kicker rv"><canvas id="kick"></canvas> NADI-2026 Subtask 2 · fourth place</p>
+    <h1 class="rv">Classify spoken Arabic into one of 11 country-level dialects under
+    cross-domain conditions, where the test set differs in domain and source from training
+    and development data.</h1>
+    <p class="lede rv">A secondary-domain development set is provided alongside the primary
+    one. The label space is the full 20-class inventory and admits no abstention — a system
+    scores over all twenty, while the blind set covers only a subset.</p>
     <div class="actions rv">
       <button class="btn" id="heroPlay">▶ Play a clip</button>
-      <a class="btn g" href="#method">How it works</a>
+      <a class="btn g" href="#method">Method</a>
+    </div>
+    <div class="heroSpec rv"><canvas id="heroSpec"></canvas></div>
     </div>
     <div class="heroSpec rv"><canvas id="heroSpec"></canvas></div>
   </div>
@@ -306,36 +337,98 @@ addEventListener('error',()=>document.documentElement.className='');
   <section id="method">
     <p class="eyebrow rv"><canvas class="emark"></canvas> Method</p>
     <h2 class="rv">How it was built.</h2>
-    <p class="sub rv">The hidden test set is broadcast speech, so broadcast speech is in the training mix — and the evaluation is arranged so that nothing the model was scored on could have leaked into what it learned from.</p>
-    <div class="steps">
-      <div class="step rv"><canvas class="stepc" data-mode="0"></canvas><span class="n">01</span><h3>Fine-tune</h3><p>An Arabic speech encoder is fine-tuned for 20-way dialect. The cues that identify a dialect sit in the middle layers, not just the last one, so every layer is weighted.</p></div>
-      <div class="step rv"><canvas class="stepc" data-mode="1"></canvas><span class="n">02</span><h3>Split honestly</h3><p>Casablanca is split by program, not by clip — clips from one broadcast share speakers and channel, so a clip-level split would leak. 80% trains, one half of the rest picks the checkpoint, and the last half is never looked at until the end.</p></div>
-      <div class="step rv"><canvas class="stepc" data-mode="2"></canvas><span class="n">03</span><h3>Keep it stable</h3><p>One optimizer, built once, with a learning-rate schedule that never restarts mid-run. That is most of what kept long runs from drifting.</p></div>
+    <p class="sub rv">The blind domain is unknown at development time, so in-domain accuracy
+    measures fit to the one domain the test set is known <i>not</i> to come from. Every decision
+    below is made on out-of-domain accuracy instead.</p>
+
+    <div class="part rv">
+      <h3><span class="pn">01</span>Literature review</h3>
+      <p>NADI ran as a text benchmark from 2020 and moved to speech in 2025, where ELYADATA won
+      with a Whisper-large-v3 encoder and attentive pooling at 79.8%. Robustness has been pursued
+      separately — voice conversion to normalise speaker identity, augmentation-based domain
+      diversification. What none of it settles is how well a development-time proxy predicts
+      blind cross-domain performance.</p>
+    </div>
+
+    <div class="part rv">
+      <h3><span class="pn">02</span>Data, preprocessing and augmentation</h3>
+      <dl class="dl">
+        <dt>ADI20-micro</dt>
+        <dd>67,015 training and 10,806 validation clips over 20 classes, balanced by duration
+        rather than clip count.</dd>
+        <dt>Casablanca</dt>
+        <dd>8 of the 20 classes, split at the <i>program</i> boundary rather than the clip
+        boundary, since clips from one program share a speaker and a recording chain. 10,899
+        clips join training; the rest is held out.</dd>
+        <dt>MADIS-5</dt>
+        <dd>Five macro-regions, never trained on — the only genuinely out-of-domain measurement
+        in the system.</dd>
+      </dl>
+      <p>Audio is decoded to 16 kHz mono with no voice-activity detection, loudness normalisation
+      or transcript filtering. Each batch is cropped to one duration drawn from {1, 2, 3, 5, 8,
+      12} seconds — the main robustness measure, since blind clip lengths are unknown — with
+      SpecAugment applied on top.</p>
+    </div>
+
+    <div class="part rv">
+      <h3><span class="pn">03</span>Modelling</h3>
+      <p>Three backbones, one architecture: encoder, mask-aware mean pooling, 20-way linear head.</p>
+      <div class="tw">
+      <table>
+        <caption>Top-1 accuracy (%), identical split and protocol. Casablanca is out-of-domain
+        here — no selection run trains on it. MADIS-5 is scored over five macro-regions.</caption>
+        <tr><th>backbone</th><th class="n">steps</th><th class="n">ADI20</th>
+            <th class="n">Casablanca</th><th class="n">MADIS-5</th></tr>
+        <tr><td>Whisper-small</td><td class="n">3.0k</td><td class="n">32.87</td>
+            <td class="n">36.21</td><td class="n">18.96</td></tr>
+        <tr><td>ADI-whisper-ADI20</td><td class="n">3.0k</td><td class="n">83.70</td>
+            <td class="n">83.74</td><td class="n">48.02</td></tr>
+        <tr><td>cohere-transcribe-arabic</td><td class="n">3.0k</td><td class="n">78.12</td>
+            <td class="n">81.39</td><td class="n g">80.22</td></tr>
+        <tr class="win"><td>cohere-transcribe-arabic</td><td class="n">5.2k</td>
+            <td class="n">90.52</td><td class="n">93.99</td><td class="n">75.99</td></tr>
+      </table>
+      </div>
+      <p>The criteria disagree: ADI-whisper-ADI20 leads on ADI20 by 5.6 points and trails on
+      MADIS-5 by 32, so in-domain accuracy would have rejected the encoder that generalises best.
+      LoRA collapses both backbones to about 16% on 20-way Casablanca, so the representation has
+      to be adapted by full fine-tuning.</p>
+      <p>Fine-tuning uses ADI20-micro plus the Casablanca training portion, resampled by
+      count(y)<sup>−0.5</sup>. The head trains alone for 500 steps, then the encoder unfreezes
+      with a linear re-warm-up; learning rates 2×10<sup>−3</sup> and 2×10<sup>−5</sup> on cosine
+      decay, batch 128, layer-mixing, 6,000 steps. At inference each clip is passed at full
+      length, mean-pooled, and assigned the argmax over twenty logits.</p>
     </div>
   </section>
 
   <section id="result">
     <p class="eyebrow rv"><canvas class="emark"></canvas> Result</p>
-    <h2 class="rv">What the final model scores.</h2>
-    <p class="sub rv">Trained on ADI-20 and 80% of the Casablanca programs. The remaining 20%
-    was split in half by program: one half chose the checkpoint, the other was held back and
-    never influenced training or selection. That held-back half is what the second figure is
-    measured on — different programs, different speakers, different channels.</p>
+    <h2 class="rv">52.51% on the blind test set. Fourth place.</h2>
+    <p class="sub rv">The evaluation sets degrade with distance from the training domain. That
+    ordering is the result.</p>
 
     <div class="figures rv">
       <div class="fig">
-        <div class="fv"><span id="figId">90.9</span><i>%</i></div>
-        <div class="fk">ADI-20 validation</div>
-        <div class="fn">In-domain. The corpus the model was trained on.</div>
+        <div class="fv"><span>91.54</span><i>%</i></div>
+        <div class="fk">ADI20-micro · in-domain</div>
+        <div class="fn">The corpus the model was trained on.</div>
       </div>
       <div class="fig">
-        <div class="fv"><span id="figOod">93.3</span><i>%</i></div>
-        <div class="fk">Casablanca, held-out programs</div>
-        <div class="fn">Programs excluded from training and from checkpoint selection.</div>
+        <div class="fv"><span>52.51</span><i>%</i></div>
+        <div class="fk">Blind test · official</div>
+        <div class="fn">Undisclosed sources, undisclosed subset of the label space.</div>
       </div>
     </div>
 
-    <p class="spec rv" id="spec">20 classes · 878 test clips · accuracy, 20-way</p>
+    <p class="alsofig rv">Casablanca <b>92.97</b> <span>in-corpus</span>
+      &nbsp;·&nbsp; MADIS-5 <b>73.10</b> <span>out-of-domain, 5-way</span>
+      &nbsp;·&nbsp; C<sub>avg</sub> <b>0.046 → 0.11</b></p>
+
+    <p class="sub rv">Of the 39.03-point gap, <b>18.44</b> is explained by leaving the training
+    domain and <b>20.59</b> was invisible to every development signal available. A corpus stops
+    being a valid selection signal the moment it enters training.</p>
+
+    <p class="spec rv" id="spec">20-class output space · blind set covers 11 · top-1 accuracy</p>
   </section>
 
 </main>
@@ -771,26 +864,12 @@ async function envelopeOf(url,buckets){
 async function hydrate(){
   const base = 'data/';
   const got = await Promise.all(
-    [grab(base+'demo.json'), grab(base+'results.json')]);
-  const demo = got[0], results = got[1];
+    [grab(base+'demo.json')]);
+  const demo = got[0];
 
-  /* ---- the two figures, and the hero numbers ---- */
-  if(results && results.headline){
-    const h = results.headline;
-    const set = function(id, v){ const el = document.getElementById(id);
-      if(el) el.textContent = v.toFixed(1); };
-    set('figId', h.in_domain);
-    set('figOod', h.broadcast);
-    if(results.n_classes && results.n_test_clips){
-      const sp = document.getElementById('spec');
-      if(sp) sp.textContent = results.n_classes + ' classes \u00b7 ' +
-        results.n_test_clips + ' test clips \u00b7 accuracy, ' + results.n_classes + '-way';
-    }
-    document.querySelectorAll('[data-fig]').forEach(function(el){
-      if(el.dataset.fig === 'ood') el.textContent = h.broadcast.toFixed(1) + '%';
-      if(el.dataset.fig === 'id') el.textContent = h.in_domain.toFixed(1) + '%';
-    });
-  }
+  /* The figures in the Result section are taken from the paper, not from
+     results/runs.csv -- runs.csv logs the development campaign, while the page
+     reports the submitted system. They are intentionally static. */
 
   /* ---- demo clips ---- */
   if(demo && demo.clips && demo.clips.length){
