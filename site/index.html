@@ -6,8 +6,9 @@
 <title>Arabic Spoken Dialect Identification — NADI-2026</title>
 <meta name="description" content="AI Elites at NADI-2026 Subtask 2: country-level spoken Arabic dialect identification under domain shift. Selecting on out-of-domain accuracy. 52.51% on the blind test set, fourth place.">
 <meta name="author" content="KAUST Academy">
-<meta name="color-scheme" content="light">
-<meta name="theme-color" content="#F3F3F0">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F3F3F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131417" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="https://asdi-sigma.vercel.app/">
 
 <meta property="og:type" content="website">
@@ -49,7 +50,13 @@
   --rule-2:rgba(20,22,26,.055);
   --say:36,56,216;             /* ultramarine. the ONLY chroma. means: the model asserts */
   --say-solid:#2438D8;
+  --say-soft:rgba(36,56,216,.4);
   --no:#B3341F;
+  --no-rule:rgba(179,52,31,.35);
+  --ok:#1B7A4B;
+  --warn-bg:#FBF3DF;
+  --warn-fg:#7A5A12;
+  --on-chroma:#fff;            /* text ON --say / --no, which invert at night */
   --cell:6px;
 
   --display:'Instrument Sans',system-ui,sans-serif;
@@ -58,6 +65,52 @@
 
   --s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:36px;--s7:56px;--s8:84px;--s9:132px;
   --gutter:clamp(20px,4vw,56px);
+}
+/* ---------- the same material at night ----------
+   Chalk on slate, not a new design: only the tokens above are redefined, so
+   every rule, meter and canvas below follows without knowing a theme exists.
+   Three blocks, because the theme has three states — OS says dark, the reader
+   said dark, the reader said light — and the reader must win in both
+   directions. Never give a colour its only definition inside one of them. */
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#131417;
+    --paper-2:#1B1D21;
+    --ink:233,233,228;
+    --ink-solid:#E9E9E4;
+    --ink-2:#A8ADB6;
+    --ink-3:#7F858F;
+    --rule:rgba(233,233,228,.13);
+    --rule-2:rgba(233,233,228,.065);
+    --say:122,141,255;
+    --say-solid:#7A8DFF;
+    --say-soft:rgba(122,141,255,.42);
+    --no:#F2705A;
+    --no-rule:rgba(242,112,90,.38);
+    --ok:#4FBF88;
+    --warn-bg:#241E0F;
+    --warn-fg:#DCBB6B;
+    --on-chroma:#131417;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131417;
+  --paper-2:#1B1D21;
+  --ink:233,233,228;
+  --ink-solid:#E9E9E4;
+  --ink-2:#A8ADB6;
+  --ink-3:#7F858F;
+  --rule:rgba(233,233,228,.13);
+  --rule-2:rgba(233,233,228,.065);
+  --say:122,141,255;
+  --say-solid:#7A8DFF;
+  --say-soft:rgba(122,141,255,.42);
+  --no:#F2705A;
+  --no-rule:rgba(242,112,90,.38);
+  --ok:#4FBF88;
+  --warn-bg:#241E0F;
+  --warn-fg:#DCBB6B;
+  --on-chroma:#131417;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -82,6 +135,24 @@ header{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--paper
 .navl a::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;background:rgb(var(--say));transform:scaleX(0);transform-origin:left;transition:transform .22s cubic-bezier(.2,.7,.3,1)}
 .navl a:hover::after{transform:scaleX(1)}
 @media(max-width:760px){.navl{display:none}}
+
+/* ---------- theme control ----------
+   Two cells, one inked and one hollow, that trade places. The page is made of
+   cells; the switch that inverts the page is made of the same thing.
+   Hidden until scripting is confirmed alive, so it is never a dead button. */
+.tt{display:none;align-items:center;justify-content:flex-end;gap:4px;
+  background:none;border:0;padding:0;margin-right:-2px;cursor:pointer;
+  min-width:44px;height:44px;line-height:0;-webkit-tap-highlight-color:transparent}
+.js .tt{display:flex}
+.tt i{width:7px;height:7px;display:block;transition:background .18s,box-shadow .18s}
+.tt .on{background:var(--ink-solid)}
+.tt .off{box-shadow:inset 0 0 0 1px rgba(var(--ink),.42)}
+.tt[aria-pressed="true"] .on{background:transparent;box-shadow:inset 0 0 0 1px rgba(var(--ink),.42)}
+.tt[aria-pressed="true"] .off{background:var(--ink-solid);box-shadow:none}
+.tt:hover .on,.tt[aria-pressed="true"]:hover .off{background:var(--say-solid)}
+.tt:hover .off,.tt[aria-pressed="true"]:hover .on{box-shadow:inset 0 0 0 1px var(--say-solid)}
+.tt[aria-pressed="true"]:hover .off{box-shadow:none}
+.tt:focus-visible{outline:2px solid var(--say-solid);outline-offset:3px}
 
 /* ---------- reveal ----------
    Hidden ONLY when scripting is confirmed alive (html.js, set by the guard in
@@ -115,7 +186,7 @@ h1{font-weight:700;font-size:clamp(2.1rem,5.2vw,3.5rem);line-height:1.02;
   transition:background .2s}
 .btn:hover{background:var(--say-solid)}
 .btn.g{background:transparent;color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--rule)}
-.btn.g:hover{color:var(--say-solid);box-shadow:inset 0 0 0 1px rgba(36,56,216,.4)}
+.btn.g:hover{color:var(--say-solid);box-shadow:inset 0 0 0 1px var(--say-soft)}
 
 /* the hero is the TIME domain — what a listener hears. ink on paper, no box. */
 .heroSpec{margin:var(--s7) 0 0;position:relative;
@@ -135,13 +206,13 @@ h1{font-weight:700;font-size:clamp(2.1rem,5.2vw,3.5rem);line-height:1.02;
 .chip:hover{color:var(--ink-solid)}
 .chip[aria-pressed="true"]{background:var(--ink-solid);color:var(--paper)}
 .chip.miss{box-shadow:inset 0 -2px 0 var(--no)}
-.chip.miss[aria-pressed="true"]{background:var(--no);color:#fff;box-shadow:none}
+.chip.miss[aria-pressed="true"]{background:var(--no);color:var(--on-chroma);box-shadow:none}
 .curation{font-family:var(--mono);font-size:.68rem;line-height:1.75;color:var(--ink-3);
   margin:0 0 var(--s5);max-width:76ch}
 .curation b{color:var(--ink-2);font-weight:500}
 .tagpill{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
   color:var(--ink-3);border:1px solid var(--rule);padding:2px 7px;margin-left:6px}
-.tagpill.miss{color:var(--no);border-color:rgba(179,52,31,.35)}
+.tagpill.miss{color:var(--no);border-color:var(--no-rule)}
 .chip.wrongclip[aria-pressed="true"]{background:var(--no)}
 
 .stage{display:grid;grid-template-columns:1fr 316px;gap:var(--s6);align-items:start}
@@ -150,7 +221,7 @@ h1{font-weight:700;font-size:clamp(2.1rem,5.2vw,3.5rem);line-height:1.02;
 .scopeWrap{position:relative}
 .scopeWrap canvas{width:100%;height:172px}
 .transport{display:flex;align-items:center;gap:var(--s4);margin-top:var(--s4);border-top:1px solid var(--rule-2);padding-top:var(--s4)}
-.play{width:40px;height:40px;flex:0 0 40px;border:0;background:var(--say-solid);color:#fff;cursor:pointer;
+.play{width:40px;height:40px;flex:0 0 40px;border:0;background:var(--say-solid);color:var(--on-chroma);cursor:pointer;
   display:grid;place-items:center;font-size:11px;transition:background .2s,transform .12s}
 .play:hover{background:var(--ink-solid)}
 .play:active{transform:scale(.94)}
@@ -177,12 +248,12 @@ h1{font-weight:700;font-size:clamp(2.1rem,5.2vw,3.5rem);line-height:1.02;
 .verdict .meta{font-family:var(--mono);font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;
   color:var(--ink-3);text-align:right;line-height:1.8}
 .verdict .meta b{font-weight:500;font-variant-numeric:tabular-nums;color:var(--ink-2)}
-.ok{color:#1B7A4B!important}.bad{color:var(--no)!important}
+.ok{color:var(--ok)!important}.bad{color:var(--no)!important}
 .note{font-family:var(--mono);font-size:.68rem;color:var(--ink-3);line-height:1.8;margin:var(--s5) 0 0;max-width:70ch}
 .note b{color:var(--ink-2);font-weight:400}
 
 .flag{display:flex;gap:11px;align-items:baseline;font-family:var(--mono);font-size:.68rem;line-height:1.7;
-  color:#7A5A12;background:#FBF3DF;padding:11px var(--s4);margin-bottom:var(--s5)}
+  color:var(--warn-fg);background:var(--warn-bg);padding:11px var(--s4);margin-bottom:var(--s5)}
 .flag b{letter-spacing:.1em;text-transform:uppercase;font-weight:600;white-space:nowrap}
 
 /* ---------- sections ---------- */
@@ -261,6 +332,35 @@ footer{margin-top:var(--s9)}
   .js .rv,.js .rv.in{opacity:1;transform:none;transition:none}
 }
 </style>
+
+<script>
+/* THEME, BEFORE THE FIRST PAINT.
+   This runs in <head> on purpose: applying the stored choice after the body
+   renders is what produces the white flash on a dark-mode reload. No stored
+   choice means the OS decides, and keeps deciding. */
+(function(){
+  var KEY='asdi-theme', root=document.documentElement, saved=null;
+  try{ saved=localStorage.getItem(KEY) }catch(e){}
+  /* The two media-scoped <meta theme-color> tags are correct with scripting off.
+     Once a reader has chosen, media queries are the wrong authority, so they
+     collapse to one unconditional tag. */
+  function chrome(t){
+    var dark = t==='dark' || (t!=='light' && matchMedia('(prefers-color-scheme: dark)').matches);
+    var m = document.head.querySelectorAll('meta[name="theme-color"]');
+    for(var i=1;i<m.length;i++) m[i].parentNode.removeChild(m[i]);
+    if(m[0]){ m[0].removeAttribute('media'); m[0].setAttribute('content', dark?'#131417':'#F3F3F0') }
+  }
+  window.__theme={
+    key:KEY,
+    set:function(t){
+      if(t==='light'||t==='dark'){ root.setAttribute('data-theme',t); root.style.colorScheme=t }
+      else { root.removeAttribute('data-theme'); root.style.colorScheme='light dark' }
+      chrome(t);
+    }
+  };
+  window.__theme.set(saved);
+})();
+</script>
 </head>
 <body>
 <script>
@@ -282,6 +382,7 @@ addEventListener('error',()=>document.documentElement.className='');
       <a href="#decide">Demo</a><a href="#method">Method</a><a href="#result">Result</a>
       <a href="https://github.com/musab-iskandar/Arabic_Spoken_Dialect_Identification">Code ↗</a>
     </nav>
+    <button class="tt" id="themeBtn" type="button" aria-pressed="false"><i class="on"></i><i class="off"></i></button>
   </div>
 </header>
 
@@ -458,7 +559,20 @@ addEventListener('error',()=>document.documentElement.className='');
    THE CELL. One renderer. Every graphic on the page is this.
    =========================================================== */
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const INK = [20,22,26], SAY = [36,56,216];
+/* Ink is not written down here. The canvases read the same two custom
+   properties the CSS does, so the painted graphics and the styled page cannot
+   disagree about what colour the ink is — at either time of day. */
+let INK, SAY;
+function readInk(){
+  const cs = getComputedStyle(document.documentElement);
+  const trip = (name, fallback) => {
+    const v = cs.getPropertyValue(name).trim();
+    return /^\d+\s*,\s*\d+\s*,\s*\d+$/.test(v) ? v.split(',').map(Number) : fallback;
+  };
+  INK = trip('--ink', [20,22,26]);
+  SAY = trip('--say', [36,56,216]);
+}
+readInk();
 const DPR = Math.min(devicePixelRatio||1, 2);
 
 function fit(c){
@@ -688,7 +802,9 @@ function buildRows(){
     rowsEl.appendChild(d);
   });
 }
+let lastDist = null;
 function paint(o){
+  lastDist = o;
   let best=null;for(const k in o) if(!best||o[k]>o[best]) best=k;
   for(const el of rowsEl.children){
     const k=el.dataset.k, v=o[k], lit=Math.round(v*MSTEPS), lead=k===best;
@@ -939,6 +1055,42 @@ async function hydrate(){
 }
 hydrate();
 
+/* ---------- the switch ----------
+   A token swap reaches everything the CSS draws and nothing the canvas draws,
+   because those pixels were painted once with the old ink. Repaint them. */
+(function(){
+  const btn = document.getElementById('themeBtn');
+  const root = document.documentElement;
+  const mq = matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => root.getAttribute('data-theme')==='dark'
+    || (!root.hasAttribute('data-theme') && mq.matches);
+
+  function label(){
+    if(!btn) return;
+    btn.setAttribute('aria-pressed', String(isDark()));
+    const l = isDark() ? 'Switch to light mode' : 'Switch to dark mode';
+    btn.setAttribute('aria-label', l); btn.title = l;
+  }
+  function repaint(){
+    readInk(); label();
+    /* still=false so the reduced-motion frames are redrawn too: they are
+       painted exactly once, and that once already happened. */
+    for(const a of anims){ a.still = false; a.draw(a, RM ? STATIC_T : T); }
+    if(lastDist) paint(lastDist);
+  }
+
+  if(btn) btn.addEventListener('click', () => {
+    const next = isDark() ? 'light' : 'dark';
+    try{ localStorage.setItem(window.__theme.key, next) }catch(e){}
+    window.__theme.set(next);
+    repaint();
+  });
+  /* Until the reader chooses, the OS stays in charge — including mid-visit. */
+  const osChange = () => { if(!root.hasAttribute('data-theme')){ window.__theme.set(null); repaint() } };
+  mq.addEventListener ? mq.addEventListener('change', osChange) : mq.addListener(osChange);
+
+  label();
+})();
 
 </script>
 </body>
