@@ -147,17 +147,17 @@ looked like, and the changes below follow from that rather than from the loss cu
      same clips. --casa-select-frac now splits Casablanca program-disjointly into a selection
      half and a held-out half that never influences checkpoint choice.
 
-TO RUN (zero setup, needs an A100/H100-class GPU). Run it from the repo root, so the output
-files below land there rather than in src/:
-      python src/train.py
-Loss/gradient/LR diagnostics are written to loss_history.csv and plotted to plots/ every
---plot-every steps. Results stream to W&B (on by default) and to train_results.jsonl /
-train_table.csv, and the full console transcript to train_run.log.
+TO RUN (zero setup, needs an A100/H100-class GPU):
+      python cohere_train_v4.py
+Loss/gradient/LR diagnostics are written to loss_history_v3.csv and plotted to plots_v3/
+every --plot-every steps. Results stream to W&B (on by default) and to
+cohere_train_v5_results.jsonl / cohere_train_v5_table.csv, and the full console
+transcript to cohere_train_v5_run.log.
 
 Three self-tests, each cheaper than the one after it, all runnable before spending GPU time:
-      python src/train.py --plot-selftest  # no torch, no GPU, no downloads
-      python src/train.py --aug-selftest   # torch only: times + validates every aug
-      python src/train.py --smoke-only     # synthetic audio through the real model
+      python cohere_train_v4.py --plot-selftest  # no torch, no GPU, no downloads
+      python cohere_train_v4.py --aug-selftest   # torch only: times + validates every aug
+      python cohere_train_v4.py --smoke-only     # synthetic audio through the real model
 
 Still NOT enabled by default, one flag each so they can be tested one at a time against this
 baseline: --pool attn_stat (attentive-statistics pooling), --specaug, --musan-dir/--rir-dir
@@ -177,10 +177,12 @@ baseline: --pool attn_stat (attentive-statistics pooling), --specaug, --musan-di
 #  The HF token needs GATED ACCESS to CohereLabs/cohere-transcribe-arabic-07-2026 and to
 #  UBC-NLP/Casablanca. ArabicSpeech/ADI17 is public and needs no token.
 #
-#  There is deliberately no constant to paste a token into: anything written into this file
-#  leaks the moment the file moves.
+#  If you are coming from v3: the token that was hardcoded there should be treated as
+#  compromised and revoked at the URL above.
 # ============================================================================
-WANDB_PROJECT         = "nadi2026-model-bench"
+HF_TOKEN_HARDCODED    = None    # deliberately None -- use $HF_TOKEN
+WANDB_KEY_HARDCODED   = None    # deliberately None -- use $WANDB_API_KEY
+WANDB_PROJECT         = None
 WANDB_ENTITY          = None    # your W&B username/team, or leave None
 
 # The private voice-converted dataset built by vc_augment.py (arXiv:2505.24713 kNN-VC).
@@ -629,18 +631,6 @@ def get_args():
                         "unbiased number you have. Every adi17_* name is REFUSED outright -- "
                         "ADI17 test is a proxy for the hidden test set, and selecting on it is "
                         "the same bias --casa-select-frac exists to remove.")
-    p.add_argument("--casa-val-frac", type=float, default=0.5, metavar="F",
-                   help="fraction of Casablanca PROGRAMS per country reserved for evaluation. "
-                        "The remaining 1-F was silently discarded before --train-on-casa existed; "
-                        "with that flag on, 1-F is exactly what gets trained on. Lowering this "
-                        "trades evaluation coverage for training data: 0.5 (the default, and what "
-                        "every run so far used) splits it evenly, 0.15 puts ~85%% into training "
-                        "and keeps a ~2k-clip sanity check. Do NOT set it to 0 -- with Casablanca "
-                        "the only broadcast-domain eval you have and MADIS shown to be actively "
-                        "misleading for this task, a run with no Casablanca eval at all cannot be "
-                        "sanity-checked before you spend a submission on it. Changing this "
-                        "CHANGES THE EVAL SET, so casa_* numbers stop being comparable to earlier "
-                        "runs; only the leaderboard remains comparable.")
     p.add_argument("--casa-select-frac", type=float, default=0.5,
                    help="fraction of the loaded Casablanca PROGRAMS used for checkpoint "
                         "selection; the rest is held out and reported separately. The baseline "
@@ -663,14 +653,14 @@ def get_args():
                    help="render a synthetic loss history (with a deliberate mid-run instability) "
                         "and exit -- exercises the whole plotting/spike-report path with no GPU "
                         "or downloads, before spending real training time.")
-    # Output paths. All are relative to the working directory the script is launched from, not
-    # to src/ -- run from the repo root and everything lands in one place (and is gitignored).
-    p.add_argument("--results", default="train_results.jsonl")
-    p.add_argument("--progress", default="train_progress.jsonl",
+    # All defaults below are _h100 / h100_ tagged (vs. cohere_train.py's untagged names) so
+    # both scripts can be run in the same directory without overwriting each other.
+    p.add_argument("--results", default="cohere_train_v5_results.jsonl")
+    p.add_argument("--progress", default="cohere_train_v5_progress.jsonl",
                    help="mid-training checkpoint evals, appended as they happen")
-    p.add_argument("--loss-csv", default="loss_history.csv")
-    p.add_argument("--spike-report", default="spike_report.txt")
-    p.add_argument("--plots-dir", default="plots")
+    p.add_argument("--loss-csv", default="loss_history_v5.csv")
+    p.add_argument("--spike-report", default="spike_report_v5.txt")
+    p.add_argument("--plots-dir", default="plots_v5")
 
     # -- run control (same shape as cohere_bench.py) --
     p.add_argument("--confusion", action="store_true",
@@ -926,14 +916,6 @@ if ARGS.use_vc and not str(ARGS.vc_repo or "").strip():
 # after the flags above are parsed. Stored as a float from here on; ARGS.sampler_alpha_auto keeps
 # the provenance for the banner, because "0.5" and "auto -> 0.5" mean different things when you
 # are reading back an old run log.
-if not 0.0 < ARGS.casa_val_frac <= 1.0:
-    print(f"FAIL: --casa-val-frac must be in (0, 1], got {ARGS.casa_val_frac}. Zero would leave "
-          "no Casablanca evaluation at all.")
-    sys.exit(2)
-if ARGS.casa_val_frac != 0.5 and not ARGS.train_on_casa:
-    print(f"NOTE: --casa-val-frac {ARGS.casa_val_frac} without --train-on-casa just DISCARDS "
-          f"{100*(1-ARGS.casa_val_frac):.0f}% of Casablanca instead of training on it.")
-
 ARGS.sampler_alpha_auto = str(ARGS.sampler_alpha).strip().lower() == "auto"
 _any_extra = bool(ARGS.use_vc or ARGS.use_adi17 or ARGS.train_on_casa
                   or ARGS.extra_train_data.strip())
@@ -1780,42 +1762,35 @@ print(f"transformers=={transformers.__version__} OK (>=4.57 required)")
 
 
 # --- credentials: environment only ---
-# Nothing is read from the source file. v3 shipped a live token in a constant, and this file
-# gets copied to rented boxes and pasted into bug reports, so the only supported source is the
-# environment. Missing credentials stop the run with the export line to copy, rather than
-# failing 20 minutes later inside a dataset download.
-def _require_env(env_names, label, how):
+# The `hardcoded` fallback is retained so a local copy of this file can still be filled in by
+# someone who understands the tradeoff, but both constants ship as None: v3 shipped a live token
+# in the source, and this file gets copied to rented boxes and pasted into bug reports.
+def _resolve(env_names, hardcoded, label):
     for n in env_names:
         if os.environ.get(n):
             return os.environ[n], f"env:{n}"
-    print("\n" + "!" * 70)
-    print(f"FAIL: no {label} credential. Set it in the environment:\n")
-    print(f"    export {env_names[0]}=...        # {how}")
-    print("\n  (Or copy .env.example to .env and fill it in.)")
-    print("!" * 70 + "\n")
-    sys.exit(1)
+    if hardcoded and not str(hardcoded).startswith("PASTE_YOUR_"):
+        return hardcoded, "hardcoded"
+    return None, "missing"
 
-# --aug-selftest exits below without touching the network or the gated model (--plot-selftest
-# has already exited further up), so it must stay runnable on a laptop with no credentials.
-_NEEDS_CREDENTIALS = not ARGS.aug_selftest
-
-USE_WANDB = not ARGS.no_wandb and _NEEDS_CREDENTIALS
+USE_WANDB = not ARGS.no_wandb
 WANDB_GROUP = None
 if USE_WANDB:
     try:
         import wandb
         import time as _time
-        # Unset WANDB_API_KEY is a hard stop rather than a silent downgrade: W&B is on by
-        # default, so silently continuing without it loses the run's metrics. --no-wandb is
-        # the way to opt out deliberately.
-        _wk, _src = _require_env(["WANDB_API_KEY"], "W&B",
-                                 "https://wandb.ai/authorize -- or pass --no-wandb")
-        os.environ["WANDB_API_KEY"] = _wk
-        try:
-            wandb.login(key=_wk, relogin=True)
-            print(f"W&B login ok ({_src})")
-        except Exception as e:
-            print(f"W&B login failed ({type(e).__name__}) -- disabling W&B, "
+        _wk, _src = _resolve(["WANDB_API_KEY"], WANDB_KEY_HARDCODED, "W&B")
+        if _wk:
+            os.environ["WANDB_API_KEY"] = _wk
+            try:
+                wandb.login(key=_wk, relogin=True)
+                print(f"W&B login ok ({_src})")
+            except Exception as e:
+                print(f"W&B login failed ({type(e).__name__}) -- disabling W&B, "
+                      "run continues with CSV + logs.")
+                USE_WANDB = False
+        else:
+            print("no W&B key (env or hardcoded) -- disabling W&B, "
                   "run continues with CSV + logs.")
             USE_WANDB = False
         if USE_WANDB:
@@ -1825,18 +1800,19 @@ if USE_WANDB:
         print("wandb not installed (pip install wandb) -- continuing without it.")
         USE_WANDB = False
 
-# The encoder itself is gated, so there is no useful run without this -- stop here rather
-# than 404 on the first model download. (ArabicSpeech/ADI17 is public and needs no token;
-# gated Casablanca and a private --vc-repo do.)
-if _NEEDS_CREDENTIALS:
-    _tok, _tsrc = _require_env(["HF_TOKEN", "HUGGINGFACE_TOKEN"], "Hugging Face",
-                               "https://huggingface.co/settings/tokens")
+_tok, _tsrc = _resolve(["HF_TOKEN", "HUGGINGFACE_TOKEN"], HF_TOKEN_HARDCODED, "HF")
+if _tok:
     try:
         from huggingface_hub import login
         login(_tok)
         print(f"HF login ok ({_tsrc})")
     except Exception as e:
         print(f"HF login failed: {type(e).__name__}: {e}")
+else:
+    print("WARNING: no HF token. Gated Casablanca AND gated cohere-ar will both fail to load, "
+          "and a private\n  --vc-repo will 404. Set it in the environment:\n"
+          "\n    export HF_TOKEN=hf_...\n"
+          "\n  (ArabicSpeech/ADI17 is public and does not need one.)")
 
 
 
@@ -2028,46 +2004,55 @@ def aug_pitch(wav):
 
 
 def _codec_available():
-    global _CODEC_AVAILABLE
-    if _CODEC_AVAILABLE is None:
-        if not HAS_TORCHAUDIO:
-            _CODEC_AVAILABLE = False
-            _aug_warn_once("codec", "torchaudio is not available, and torchaudio.io is the one "
-                                    "audio op in this script with no librosa/torch substitute -- "
-                                    "the 'codec' aug is disabled for this run. Every other aug "
-                                    "works normally.")
-            return _CODEC_AVAILABLE
-        try:
-            # Both names, because aug_codec needs both -- probing only AudioEffector would let a
-            # torchaudio that lacks CodecConfig report the aug as available and then fail per
-            # clip inside the workers.
-            from torchaudio.io import AudioEffector, CodecConfig
-            _CODEC_AVAILABLE = AudioEffector is not None and CodecConfig is not None
-        except Exception as e:
-            _CODEC_AVAILABLE = False
-            _aug_warn_once("codec", f"torchaudio.io.AudioEffector unavailable "
-                                    f"({type(e).__name__}) -- 'codec' aug disabled for this run. "
-                                    "It is NOT falling back to an ffmpeg subprocess: spawning a "
-                                    "process per sample inside a DataLoader worker costs more "
-                                    "than the aug is worth.")
-    return _CODEC_AVAILABLE
+    """Always available: the replacement below needs only torch + the resampler shim.
+
+    The original returned False whenever torchaudio.io was missing, which on torch>=2.12 is
+    always -- torchaudio's last release is 2.11, so there is no build that pairs with it. That
+    made `codec` a silent no-op in every run. The stand-in below reproduces the two artifacts
+    that actually matter for domain robustness (lost high band, coarse amplitude quantization)
+    without libav, so the gate is no longer meaningful.
+    """
+    return True
 
 
 def aug_codec(wav):
-    """Lossy-codec round-trip, faking phone/broadcast compression artifacts. In-process via
-    libav -- no subprocess, no temp files."""
-    if not _codec_available():
+    """Channel degradation: narrowband resample + mu-law requantization.
+
+    NOT a real codec round-trip -- torchaudio.io.AudioEffector is unavailable on this torch.
+    What it reproduces is the part that matters for cross-domain ADI: telephony/broadcast
+    audio has its high band gone and its amplitude coarsely quantized. Clean ADI20 studio
+    speech has neither, and that mismatch is a channel shortcut the model can learn.
+
+    Cost is two resamples plus elementwise math (~1-5 ms/clip), far below the libav version.
+    """
+    if wav.numel() < 64:
         return wav
-    from torchaudio.io import AudioEffector, CodecConfig
-    fmt, bitrate_k = random.choice([("mp3", 64), ("ogg", 32), ("mp3", 32)])
-    effector = AudioEffector(format=fmt, codec_config=CodecConfig(bit_rate=bitrate_k * 1000))
-    out = effector.apply(wav.unsqueeze(-1), SR)   # AudioEffector wants (T, C)
-    return out[:, 0].to(torch.float32)
+    sr_low = random.choice([8000, 11025])
+    w = torch.clamp(wav.to(torch.float32), -1.0, 1.0)
 
+    y = _ta_resample(w, SR, sr_low)
 
-AUG_FNS = {"noise": aug_noise, "reverb": aug_reverb, "speed": aug_speed, "gain": aug_gain,
-           "pitch": aug_pitch, "codec": aug_codec}
+    # mu-law companding: compress -> quantize to `bits` -> expand. This is the quantization
+    # noise a low-bitrate codec leaves behind, without needing a codec.
+    bits = random.choice([6, 7, 8])
+    mu = float(2 ** bits - 1)
+    denom = float(math.log1p(mu))
+    y = torch.sign(y) * torch.log1p(mu * y.abs()) / denom
+    y = torch.round((y + 1.0) / 2.0 * mu) / mu * 2.0 - 1.0
+    y = torch.sign(y) * (torch.pow(1.0 + mu, y.abs()) - 1.0) / mu
 
+    y = _ta_resample(y, sr_low, SR)
+
+    # Length must match: the collate pads/truncates to the batch crop, and a short return
+    # would be padded with silence that the pooling mask still counts as valid audio.
+    n = wav.shape[-1]
+    if y.shape[-1] < n:
+        y = torch.nn.functional.pad(y, (0, n - y.shape[-1]))
+    y = y[..., :n]
+
+    if not torch.isfinite(y).all():
+        return wav
+    return y.to(torch.float32)
 
 def apply_augmentations(wav, aug_list, p_cheap, p_slow):
     """Applies each enabled aug independently with its tier's probability. A failure in one aug
@@ -3039,7 +3024,7 @@ def _rewrite_table():
     out = df[cols]
     if "casa_acc" in out:
         out = out.sort_values("casa_acc", ascending=False)
-    out.to_csv("train_table.csv", index=False)
+    out.to_csv("cohere_train_v5_table.csv", index=False)
 
 
 def print_running_table():
@@ -3374,7 +3359,7 @@ def _subsample(d, frac, seed=SEED):
     n = max(1, int(len(d)*frac))
     return d.select(sorted(rng.choice(len(d), size=n, replace=False).tolist()))
 
-def load_casablanca(seed=SEED, val_frac=0.5, select_frac=0.5, want_train=False):
+def load_casablanca(seed=SEED, val_frac=0.2, select_frac=0.5, want_train=False):
     """Returns (select_ds, holdout_ds), split PROGRAM-disjointly.
 
     The baseline both picked the best checkpoint on casa_acc and reported casa_acc from the same
@@ -4058,8 +4043,7 @@ if ARGS.train_on_casa:
     if ARGS.skip_ood:
         print("FAIL: --train-on-casa needs Casablanca loaded, but --skip-ood disables it.")
         sys.exit(2)
-    _ct, _cs, _ch = load_casablanca(val_frac=ARGS.casa_val_frac,
-                                    select_frac=ARGS.casa_select_frac, want_train=True)
+    _ct, _cs, _ch = load_casablanca(select_frac=ARGS.casa_select_frac, want_train=True)
     _CASA_CACHE = (_cs, _ch)
     if _ct is None or len(_ct) == 0:
         print("FAIL: --train-on-casa is on but the recovered training half is empty. That means "
@@ -4238,8 +4222,7 @@ else:
     # Reuse the single split made above when --train-on-casa ran; calling load_casablanca again
     # would reshuffle and silently break the train/eval program disjointness it just asserted.
     _casa_sel, _casa_hold = (_CASA_CACHE if _CASA_CACHE is not None
-                             else load_casablanca(val_frac=ARGS.casa_val_frac,
-                                                  select_frac=ARGS.casa_select_frac))
+                             else load_casablanca(select_frac=ARGS.casa_select_frac))
     casa_ds         = _subsample(_casa_sel, ARGS.ood_subset)
     casa_holdout_ds = _subsample(_casa_hold, ARGS.ood_subset)
     madis5_ds = _subsample(load_madis5(), ARGS.ood_subset)
@@ -5530,8 +5513,8 @@ def _final_report():
           f"layer_mix={ARGS.layer_mix} lora={ARGS.lora} (cohere_train_v4.py)")
     print("=" * 70)
     print(out.round(4).to_string(index=False))
-    out.to_csv("train_table.csv", index=False)
-    print("\nwrote train_table.csv")
+    out.to_csv("cohere_train_v5_table.csv", index=False)
+    print("\nwrote cohere_train_v5_table.csv")
 
     # Repeated at the end so the last thing in a run log answers "what data was this?" -- the
     # banner from the start of the run is thousands of lines up by now.

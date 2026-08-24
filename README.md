@@ -241,16 +241,19 @@ python src/train.py \
 
 All paths are resolved to absolute at startup and are gitignored.
 
-| Output | Contents |
-| --- | --- |
-| `best_<run>_cohere-ar.pt` | Best checkpoint, selected on `--select-metric` |
-| `train_results.jsonl` | One row per completed run |
-| `train_progress.jsonl` | Mid-training evaluations, appended as they happen |
-| `train_table.csv` | Summary table across runs |
-| `loss_history.csv` | Per-step loss, gradient norm, learning rates |
-| `plots/` | Loss/accuracy/gradient plots, refreshed every `--plot-every` steps |
-| `spike_report.txt` | Gradient-norm percentiles and instability detection |
-| `train_run.log` | Full console transcript |
+| Output | Contents | Change it with |
+| --- | --- | --- |
+| `best_<run>_cohere-ar.pt` | Best checkpoint, selected on `--select-metric` | `--tag` |
+| `cohere_train_v5_results.jsonl` | One row per completed run | `--results` |
+| `cohere_train_v5_progress.jsonl` | Mid-training evaluations, appended as they happen | `--progress` |
+| `cohere_train_v5_table.csv` | Summary table across runs | fixed |
+| `loss_history_v5.csv` | Per-step loss, gradient norm, learning rates | `--loss-csv` |
+| `plots_v5/` | Loss/accuracy/gradient plots, refreshed every `--plot-every` steps | `--plots-dir` |
+| `spike_report_v5.txt` | Gradient-norm percentiles and instability detection | `--spike-report` |
+| `cohere_train_v5_run.log` | Full console transcript | follows `--results` |
+
+The `_v5` in these names is the script's own lineage, not a repo version — see [Notes](#notes).
+The run log is derived from `--results`, so renaming that renames the log with it.
 
 Metrics also stream to Weights & Biases unless `--no-wandb`. The `<run>` component is assembled
 from the enabled flags and your `--tag` — the run prints the exact checkpoint path when it saves,
