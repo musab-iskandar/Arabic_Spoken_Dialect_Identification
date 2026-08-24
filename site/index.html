@@ -1028,8 +1028,8 @@ async function hydrate(){
       const note = document.getElementById('note');
       if(note) note.innerHTML =
         'Every posterior here is this checkpoint\u2019s real output on a clip it was never ' +
-        'trained on. <b>The sweep toward it is illustrative</b> \u2014 the export records the ' +
-        'model\u2019s final distribution, not one per frame.';
+        'trained on. <b>The sweep toward it is illustrative</b> \u2014 the model scores each ' +
+        'clip once, not frame by frame.';
     }
     /* Open on a success. Which clip is first is an artefact of export order, and
        leading with a failure misrepresents a model that is right 93% of the time. */
