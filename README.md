@@ -1,27 +1,56 @@
 <p align="center">
-  <img src="assets/logo-wordmark.svg" alt="ASDI — Arabic Spoken Dialect Identification" width="560">
+  <img src="site/og.png" alt="Arabic Spoken Dialect Identification" width="640">
 </p>
 
 # Arabic Spoken Dialect Identification
 
-> **NADI-2026 Shared Task — Subtask 2**
-> 20-way ADI-20 spoken dialect identification, by fine-tuning an Arabic ASR encoder.
+> **NADI-2026 Shared Task — Subtask 2 · fourth place**
+> Country-level spoken Arabic dialect identification under domain shift, by fine-tuning an
+> Arabic ASR encoder and selecting on out-of-domain accuracy.
 
 `KAUST Academy` · `Python 3.10+` · `PyTorch`
 
-**Repository:** `https://github.com/musab-iskandar/Arabic_Spoken_Dialect_Identification`
+**Paper:** *AI Elites at NADI 2026 Shared Task: Selecting on Out-of-Domain Accuracy for
+Cross-Domain Spoken Arabic Dialect Identification*
+**Landing page:** <https://asdi-sigma.vercel.app>
 
 ---
 
 ## Contents
 
+- [Results](#results)
 - [The task](#the-task)
+- [Data](#data)
 - [Approach](#approach)
 - [Repository structure](#repository-structure)
 - [Setup](#setup)
 - [Training pipeline](#training-pipeline)
 - [Generating a submission](#generating-a-submission)
+- [Landing page](#landing-page)
+- [Credits](#credits)
 - [Notes](#notes)
+
+---
+
+## Results
+
+The submitted system, ordered by increasing distance from the training domain.
+
+| Evaluation set | Accuracy | C<sub>avg</sub> |
+| --- | ---: | ---: |
+| ADI20-micro — in-domain | 91.54 | 0.046 |
+| Casablanca — **in-corpus**, its training portion is in the mixture | 92.97 | 0.014 |
+| MADIS-5 — out-of-domain, scored over 5 macro-regions | 73.10 | — |
+| **Blind test — official** | **52.51** | **0.11** |
+
+Fourth place. The in-domain to blind gap is 39.03 points; moving to a held-out out-of-domain
+corpus accounts for at most 18.44 of them, leaving 20.59 invisible to every development signal
+available at the time.
+
+Two findings are worth more than the score. Selecting on out-of-domain accuracy chose an encoder
+that in-domain accuracy would have rejected by 32 points on MADIS-5. And a corpus stops being a
+valid selection signal the moment it enters the training mixture — which is what happened to
+Casablanca here, and why its number sits *above* in-domain accuracy rather than below it.
 
 ---
 
@@ -43,6 +72,19 @@ Two properties of the task drive most of the design here:
 
 The test set is 878 clips.
 
+## Data
+
+| Corpus | Role | Access |
+| --- | --- | --- |
+| [`UBC-NLP/NADI_2026_ADI20_micro`](https://huggingface.co/datasets/UBC-NLP/NADI_2026_ADI20_micro) | Primary training and in-domain validation. 67,015 train / 10,806 validation clips over 20 classes, balanced by duration rather than clip count. | organizer-released |
+| [`UBC-NLP/Casablanca`](https://huggingface.co/datasets/UBC-NLP/Casablanca) | Secondary domain. Covers 8 of the 20 classes. Split at the **program** boundary — clips from one broadcast share a speaker and a recording chain, so a clip-level split would leak. | gated |
+| [`badrex/MADIS5-spoken-arabic-dialects`](https://huggingface.co/datasets/badrex/MADIS5-spoken-arabic-dialects) | Out-of-domain evaluation only, never trained on. Labelled over five macro-regions, so predictions are mapped from the 20-way argmax under a fixed lookup. | public |
+
+Casablanca is used two ways, and the distinction matters: it is genuinely out-of-domain during
+backbone selection, and **in-corpus** for the final system, where its training portion has
+entered the mixture and its accuracy is no longer evidence of transfer. MADIS-5 is the only
+corpus in the project that is never trained on.
+
 ## Approach
 
 Fine-tune the encoder of
@@ -60,9 +102,12 @@ hidden test set. Everything below exists to attack that gap:
   running statistics.
 - **Train/eval consistency.** Crop lengths are drawn per *batch*, so training and evaluation pool
   comparable numbers of frames rather than ~50 against ~375.
-- **Honest OOD measurement.** Casablanca (TV/broadcast) is split *program-disjointly* into a
-  checkpoint-selection half and a held-out half. The held-out number never influences checkpoint
-  choice, so it is not measured on the clips that chose the checkpoint.
+- **Program-disjoint splitting.** Casablanca (TV/broadcast) is split by *program*, not by clip,
+  into a checkpoint-selection half and a held-out half. The held-out number never influences
+  checkpoint choice, so it is not measured on the clips that chose the checkpoint.
+  **Caveat, and it is the paper's main finding:** once Casablanca's training portion enters the
+  mixture, that number stops being evidence of transfer and becomes a measure of in-domain fit.
+  MADIS-5 is the only corpus here that is never trained on.
 - **Augmentation** behind `--aug`, tiered by CPU cost so the cheap ones run inside the dataloader
   workers.
 - **Optional architecture levers**, all default-off and testable one at a time: `--layer-mix`
@@ -77,8 +122,21 @@ hidden test set. Everything below exists to attack that gap:
 ├── src/
 │   ├── train.py          fine-tuning pipeline: data, augmentation, training loop,
 │   │                     evaluation, diagnostics and plots
-│   └── submit.py         runs a checkpoint over the test set and writes the
-│                         competition submission
+│   ├── submit.py         runs a checkpoint over the test set and writes the
+│   │                     competition submission
+│   ├── export_site.py    orchestrator: builds every data file the landing page
+│   │                     reads, then packages them for transfer
+│   ├── export_demo.py    runs a checkpoint over real clips and writes demo.json
+│   │                     plus the audio the page plays
+│   ├── export_ledger.py  turns results/runs.csv into ledger.json
+│   ├── placeholder_demo.py  synthetic demo data, flagged synthetic:true, so the
+│   │                     page can be built without GPU access
+│   └── set_base.py       stamps the public URL into canonical, Open Graph and
+│                         sitemap entries
+├── site/                 the landing page — static, self-contained, no build step
+│   ├── index.html
+│   ├── 404.html
+│   └── data/             demo.json + audio/, written by src/export_site.py
 ├── notebooks/
 │   └── test_gap_diagnosis.ipynb
 │                         executed investigation of the validation-to-leaderboard gap
@@ -91,9 +149,11 @@ hidden test set. Everything below exists to attack that gap:
 └── .gitignore
 ```
 
-Both scripts are standalone CLIs — there is nothing to install as a package, and no shared module
-to import. **Run them from the repository root** so their outputs land there rather than in
-`src/`.
+Every script is a standalone CLI — there is nothing to install as a package. The one exception to
+"no shared module" is `export_demo.py`, which imports `submit.py` deliberately, so the numbers on
+the page come from the same verified inference path as the submission rather than a second copy of
+it that could drift. **Run them from the repository root** so their outputs land there rather than
+in `src/`.
 
 ## Setup
 
@@ -123,9 +183,11 @@ export HF_TOKEN=...          # https://huggingface.co/settings/tokens
 export WANDB_API_KEY=...     # https://wandb.ai/authorize  (or pass --no-wandb)
 ```
 
-The HF token needs **gated access** to `CohereLabs/cohere-transcribe-arabic-07-2026` and
-`UBC-NLP/Casablanca`. `ArabicSpeech/ADI17` is public. Both scripts stop immediately with the
-export line to copy if a credential is missing, rather than failing later inside a download.
+The HF token needs **gated access** to
+[`CohereLabs/cohere-transcribe-arabic-07-2026`](https://huggingface.co/CohereLabs/cohere-transcribe-arabic-07-2026)
+and [`UBC-NLP/Casablanca`](https://huggingface.co/datasets/UBC-NLP/Casablanca). The ADI20-micro
+and MADIS-5 datasets need no special access. Every script stops immediately with the export line
+to copy if a credential is missing, rather than failing later inside a download.
 
 ---
 
@@ -284,6 +346,56 @@ deliberately defensive:
 
 Useful options: `--tta N` for multi-crop averaging, `--no-verify` to skip the validation pass
 (faster, less safe), `--limit N` for a quick partial run.
+
+## Landing page
+
+`site/` is a static page with no build step and no framework: one HTML file, its data, and the
+clips. It plays real audio through the model's real posteriors, so it needs an export first.
+
+```bash
+# on a machine with the checkpoint and a GPU
+python src/export_site.py \
+    --checkpoint best_v3_lm_casatr_v6_cohere-ar.pt \
+    --casa-val-frac 0.2 --casa-select-frac 0.5 --seed 42 \
+    --pool-size 1500
+```
+
+The split flags **must match what the checkpoint was trained with**. If they do not, the "held-out"
+clips may be ones that checkpoint trained on, and the demo becomes quietly dishonest with nothing
+to warn you. The exporter prints the pool accuracy it measured for exactly this reason — compare
+it against that run's logged `casa_acc_holdout` before trusting the output.
+
+That writes `site/data/` and a `site-data.tar.gz` to copy back. Then:
+
+```bash
+tar -xzf site-data.tar.gz -C site/
+cd site && python -m http.server 8731
+```
+
+Serving over HTTP is not optional: `fetch()` is blocked on `file://`, so opening `index.html`
+directly falls back to the built-in placeholder numbers and shows a banner saying so.
+
+The clip selection is deliberately mixed rather than flattering — `--correct-frac` (default 0.75)
+sets how many of the exported clips the model got right, and the page states the ratio in words.
+A demo that only shows wins is an advertisement.
+
+## Credits
+
+**Datasets.** This work would not exist without three openly released corpora:
+
+- [`UBC-NLP/NADI_2026_ADI20_micro`](https://huggingface.co/datasets/UBC-NLP/NADI_2026_ADI20_micro)
+  — the shared task's ADI-20 subset, used for training and in-domain validation.
+- [`UBC-NLP/Casablanca`](https://huggingface.co/datasets/UBC-NLP/Casablanca) — Talafha et al.,
+  2024. Broadcast speech across Arabic dialects; the secondary domain here.
+- [`badrex/MADIS5-spoken-arabic-dialects`](https://huggingface.co/datasets/badrex/MADIS5-spoken-arabic-dialects)
+  — Abdullah et al., 2025. A manually curated cross-domain benchmark, and the only corpus in this
+  project that is never trained on.
+
+**Model.**
+[`CohereLabs/cohere-transcribe-arabic-07-2026`](https://huggingface.co/CohereLabs/cohere-transcribe-arabic-07-2026)
+— the Arabic ASR encoder the final system fine-tunes.
+
+**Shared task.** NADI-2026 Subtask 2, and the NADI organisers for running the benchmark.
 
 ## Notes
 
